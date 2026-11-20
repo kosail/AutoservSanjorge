@@ -1,47 +1,91 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { generarPDF } = require('../exportaciones/pdf');
+const { generarExcel } = require('../exportaciones/excel');
 
-/**
- * GET /api/reportes/ventas
- */
-router.get('/ventas', async (req, res) => {
-  try {
-    const { rows } = await pool.query(`
+async function consultarVentas(fecha = null) {
+  // El valor por defecto de Venta.fecha usa la zona configurada en PostgreSQL.
+  const zonaAlmacenamiento = "current_setting('TimeZone')";
+  const fechaLocal = `(v.fecha AT TIME ZONE ${zonaAlmacenamiento} AT TIME ZONE 'America/Mexico_City')`;
+  const { rows } = await pool.query(`
       SELECT 
         v.idVenta as id,
         u.nombre AS cliente,
-        STRING_AGG(p.nombre || ' x' || dv.cantidad::text, ', ' ORDER BY p.nombre) AS servicio,
-        v.fecha,
+        COALESCE(STRING_AGG(p.nombre || ' x' || dv.cantidad::text, ', ' ORDER BY p.nombre), anterior.nombre) AS servicio,
+        TO_CHAR(${fechaLocal}, 'YYYY-MM-DD') AS fecha_iso,
+        TO_CHAR(${fechaLocal}, 'FMDD/FMMM/YYYY') AS fecha,
         v.total,
         v.metodo_pago
       FROM Venta v
       LEFT JOIN Usuarios u ON u.idUsuarios = v.idUsuarios
       LEFT JOIN DetalleVenta dv ON dv.idVenta = v.idVenta
       LEFT JOIN Productos p ON p.idProductos = dv.idProductos
-      GROUP BY v.idVenta, u.nombre, v.fecha, v.total, v.metodo_pago
-      ORDER BY v.fecha DESC
-    `);
+      LEFT JOIN Productos anterior ON anterior.idProductos = v.idProductos
+      WHERE $1::date IS NULL OR (
+        v.fecha >= ($1::date::timestamp AT TIME ZONE 'America/Mexico_City' AT TIME ZONE ${zonaAlmacenamiento})
+        AND v.fecha < (($1::date + 1)::timestamp AT TIME ZONE 'America/Mexico_City' AT TIME ZONE ${zonaAlmacenamiento})
+      )
+      GROUP BY v.idVenta, u.nombre, v.fecha, v.total, v.metodo_pago, anterior.nombre
+      ORDER BY v.fecha DESC, v.idVenta DESC
+    `, [fecha]);
 
-    // Map metodo_pago to strings
-    const mapped = rows.map(r => {
-      let metodo = 'efectivo';
-      if (r.metodo_pago === 2) metodo = 'tarjeta';
-      if (r.metodo_pago === 3) metodo = 'transferencia';
-      return {
-        id: `V-${r.id.toString().padStart(3, '0')}`,
-        cliente: r.cliente || 'Cliente General',
-        servicio: r.servicio || 'Venta',
-        fecha: new Date(r.fecha).toLocaleDateString('es-ES'),
-        total: Number(r.total) || 0,
-        metodo
-      };
-    });
+  return rows.map(r => ({
+    id: `V-${String(r.id).padStart(3, '0')}`,
+    cliente: r.cliente || 'Cliente General',
+    servicio: r.servicio || 'Venta',
+    fecha: r.fecha,
+    fechaISO: r.fecha_iso,
+    total: Number(r.total) || 0,
+    metodo: { 2: 'tarjeta', 3: 'transferencia' }[r.metodo_pago] || 'efectivo',
+  }));
+}
 
-    res.json(mapped);
+router.get('/ventas', async (req, res) => {
+  try {
+    res.json(await consultarVentas());
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener reporte de ventas' });
+  }
+});
+
+router.get('/ventas/diarias', async (req, res) => {
+  const { fecha, formato = 'json' } = req.query;
+  const fechaValida = typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+    && fecha >= '0001-01-01' && new Date(fecha).toJSON()?.slice(0, 10) === fecha;
+  if (!fechaValida) return res.status(400).json({ error: 'Selecciona una fecha válida (AAAA-MM-DD)' });
+  if (!['json', 'pdf', 'xlsx'].includes(formato)) {
+    return res.status(400).json({ error: 'Formato de reporte inválido' });
+  }
+
+  try {
+    const ventas = await consultarVentas(fecha);
+    const total = ventas.reduce((centavos, venta) => centavos + Math.round(venta.total * 100), 0) / 100;
+    const cantidad = ventas.length;
+    res.set('Cache-Control', 'private, no-store');
+    if (formato === 'json') return res.json({ fecha, cantidad, total, ventas });
+
+    if (formato === 'pdf') {
+      const contenido = ventas.flatMap(v => [
+        `${v.id} | ${v.cliente} | $${v.total.toFixed(2)} MXN | ${v.metodo}`,
+        `Detalle: ${v.servicio}`,
+        '',
+      ]);
+      const archivo = generarPDF('Resumen diario de ventas', fecha, [
+        `Ventas registradas: ${cantidad}`,
+        `Total: $${total.toFixed(2)} MXN`,
+        '',
+        ...(cantidad ? contenido : ['No hay ventas registradas para esta fecha.']),
+      ]);
+      return res.attachment(`ventas-diarias-${fecha}.pdf`).send(archivo);
+    }
+
+    const archivo = generarExcel({ fecha, cantidad, total, ventas });
+    return res.attachment(`ventas-diarias-${fecha}.xlsx`).send(archivo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al generar el resumen diario de ventas' });
   }
 });
 

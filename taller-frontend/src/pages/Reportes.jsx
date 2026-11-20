@@ -1,14 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
 import logo from '../assets/logo_final.png';
-import { fetchReporteVentas, fetchReporteProductos, fetchReporteServicios } from '../utils/api';
+import {
+  fetchReporteVentas, fetchReporteProductos, fetchReporteServicios,
+  fetchResumenVentasDiarias, descargarVentasDiarias,
+} from '../utils/api';
 
 const carWatermark = "https://www.transparenttextures.com/patterns/stardust.png";
+const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+const calendarioTaller = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit',
+});
 
 export default function Reportes() {
   const [activeReportTab, setActiveReportTab] = useState('productos');
 
   const [dataVentas, setDataVentas] = useState([]);
+  const [fechaDiaria, setFechaDiaria] = useState(() => {
+    const partes = Object.fromEntries(calendarioTaller.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+    return `${partes.year}-${partes.month}-${partes.day}`;
+  });
+  const [resumenDiario, setResumenDiario] = useState(null);
+  const [errorResumen, setErrorResumen] = useState('');
+  const [errorDescarga, setErrorDescarga] = useState('');
+  const [descargando, setDescargando] = useState(false);
+  const [formatosAbiertos, setFormatosAbiertos] = useState(false);
+  const botonDescarga = useRef(null);
   const [prodStats, setProdStats] = useState({ valorInventario: 0, productosVendidosMes: 0, ingresosTotales: 0 });
   const [rendimientoProductos, setRendimientoProductos] = useState([]);
   const [servStats, setServStats] = useState({ serviciosRealizados: 0, ingresosPorServicios: 0, ticketPromedio: 0 });
@@ -26,18 +43,18 @@ export default function Reportes() {
   const [fechaFin, setFechaFin] = useState('');
   const [filtroAplicado, setFiltroAplicado] = useState(false);
 
+  const resumenVisible = resumenDiario?.fecha === fechaDiaria ? resumenDiario : null;
   // Datos filtrados de ventas
   const ventasFiltradas = (() => {
-    if (!filtroAplicado || (!fechaInicio && !fechaFin)) return dataVentas;
-    return dataVentas.filter(v => {
-      const fechaVenta = new Date(v.fecha);
-      const desde = fechaInicio ? new Date(fechaInicio + 'T00:00:00') : null;
-      const hasta = fechaFin   ? new Date(fechaFin   + 'T23:59:59') : null;
-      if (desde && fechaVenta < desde) return false;
-      if (hasta && fechaVenta > hasta) return false;
-      return true;
-    });
+    if (!filtroAplicado) return resumenVisible?.ventas ?? [];
+    if (!fechaInicio && !fechaFin) return dataVentas;
+    return dataVentas.filter(v => v.fechaISO
+      && (!fechaInicio || v.fechaISO >= fechaInicio)
+      && (!fechaFin || v.fechaISO <= fechaFin));
   })();
+  const totalVisible = filtroAplicado
+    ? ventasFiltradas.reduce((centavos, venta) => centavos + Math.round(venta.total * 100), 0) / 100
+    : resumenVisible?.total ?? 0;
 
   useEffect(() => {
     fetchReporteVentas().then(setDataVentas).catch(console.error);
@@ -58,6 +75,33 @@ export default function Reportes() {
       setDistribucionServicios(res.distribucion || []);
     }).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (activeReportTab !== 'ventas' || !fechaDiaria) return;
+    const controller = new AbortController();
+    fetchResumenVentasDiarias(fechaDiaria, controller.signal).then(resumen => {
+      if (controller.signal.aborted) return;
+      setResumenDiario(resumen);
+      setErrorResumen('');
+    }).catch(err => {
+      if (!controller.signal.aborted) setErrorResumen(err.message);
+    });
+    return () => controller.abort();
+  }, [activeReportTab, fechaDiaria]);
+
+  const descargarResumen = async (formato) => {
+    setFormatosAbiertos(false);
+    botonDescarga.current?.focus();
+    setDescargando(true);
+    setErrorDescarga('');
+    try {
+      await descargarVentasDiarias(fechaDiaria, formato);
+    } catch (err) {
+      setErrorDescarga(err.message);
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   const handleGenerarReporte = () => {
     setFiltroAplicado(true);
@@ -246,7 +290,7 @@ export default function Reportes() {
                     onClick={handleGenerarReporte}
                     className="w-full bg-[#1a56db] text-white p-2.5 rounded-lg text-sm font-bold hover:bg-blue-800 transition-colors"
                   >
-                    Generar Reporte
+                    Consultar historial
                   </button>
                </div>
                <div className="flex items-end">
@@ -255,7 +299,7 @@ export default function Reportes() {
                     disabled={!filtroAplicado && !fechaInicio && !fechaFin}
                     className="w-full border border-gray-300 bg-white text-gray-600 p-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Limpiar filtro
+                    Volver a ventas del día
                   </button>
                </div>
             </div>
@@ -277,16 +321,70 @@ export default function Reportes() {
             <div className="flex gap-6">
               <div className="flex-1 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                 <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Total Ventas</h3>
-                <h2 className="text-3xl font-bold text-gray-900">${ventasFiltradas.reduce((acc, v) => acc + v.total, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</h2>
+                <h2 className="text-3xl font-bold text-gray-900">{filtroAplicado || resumenVisible ? moneda.format(totalVisible) : '—'}</h2>
               </div>
               <div className="flex-1 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                 <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Número Ventas</h3>
-                <h2 className="text-3xl font-bold text-gray-900">{ventasFiltradas.length}</h2>
+                <h2 className="text-3xl font-bold text-gray-900">{filtroAplicado || resumenVisible ? ventasFiltradas.length : '—'}</h2>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="mb-6 font-bold text-lg text-gray-900">Historial de Ventas</h3>
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <h3 className="font-bold text-lg text-gray-900">{filtroAplicado ? 'Historial de ventas' : 'Ventas del día'}</h3>
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Fecha del resumen diario
+                    <input
+                      type="date"
+                      value={fechaDiaria}
+                      disabled={descargando}
+                      onChange={event => {
+                        setFechaDiaria(event.target.value);
+                        setFiltroAplicado(false);
+                        setResumenDiario(null);
+                        setErrorResumen('');
+                        setErrorDescarga('');
+                      }}
+                      className="mt-1 block min-h-11 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500"
+                    />
+                  </label>
+                  <div
+                    className="relative"
+                    onBlur={event => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) setFormatosAbiertos(false);
+                    }}
+                    onKeyDown={event => {
+                      if (event.key === 'Escape' && formatosAbiertos) {
+                        setFormatosAbiertos(false);
+                        botonDescarga.current?.focus();
+                      }
+                    }}
+                  >
+                    <button
+                      type="button"
+                      ref={botonDescarga}
+                      aria-expanded={formatosAbiertos}
+                      aria-controls="formatos-ventas-diarias"
+                      aria-disabled={!fechaDiaria || descargando}
+                      onClick={() => {
+                        if (fechaDiaria && !descargando) setFormatosAbiertos(abiertos => !abiertos);
+                      }}
+                      className="flex min-h-11 items-center gap-2 rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                    >
+                      {descargando ? 'Descargando…' : 'Descargar ventas del día'}
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+                      </svg>
+                    </button>
+                    <div id="formatos-ventas-diarias" hidden={!formatosAbiertos} className="absolute right-0 top-full z-10 mt-2 w-44 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                      <button type="button" onClick={() => descargarResumen('pdf')} className="block w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 focus-visible:bg-blue-50">Descargar PDF</button>
+                      <button type="button" onClick={() => descargarResumen('xlsx')} className="block w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 focus-visible:bg-blue-50">Descargar Excel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {errorDescarga && <p role="alert" className="mb-4 text-sm text-red-700">{errorDescarga}</p>}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -348,9 +446,12 @@ export default function Reportes() {
                     {ventasFiltradas.length === 0 && (
                       <tr>
                         <td colSpan="6" className="py-8 text-center text-gray-500 text-sm">
-                          {filtroAplicado && (fechaInicio || fechaFin)
-                            ? 'No hay ventas en el rango de fechas seleccionado.'
-                            : 'No hay ventas registradas'}
+                          {filtroAplicado
+                            ? 'No hay ventas en el historial consultado.'
+                            : <span role={errorResumen ? 'alert' : 'status'}>
+                                {errorResumen || (!fechaDiaria ? 'Selecciona una fecha para consultar las ventas.'
+                                  : resumenVisible ? 'No hay ventas registradas para esta fecha.' : 'Cargando ventas del día…')}
+                              </span>}
                         </td>
                       </tr>
                     )}
@@ -523,13 +624,15 @@ export default function Reportes() {
           <div className="mt-8">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-black tracking-tight mb-1">REPORTE DE VENTAS</h2>
-              <p className="text-gray-700 font-medium">Historial de Ventas - Detalle Completo</p>
+              <p className="text-gray-700 font-medium">
+                {filtroAplicado ? 'Historial de ventas' : `Ventas del día ${fechaDiaria}`}
+              </p>
               <p className="text-gray-600 text-sm mt-1">Fecha generación: {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
 
             <div className="bg-gray-100 rounded-lg p-4 mb-6 relative z-10">
-              <p className="font-bold text-lg">Total de Ventas: <span className="font-normal text-gray-800">${dataVentas.reduce((acc, v) => acc + v.total, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></p>
-              <p className="font-bold text-lg">Número de Ventas: <span className="font-normal text-gray-800">{dataVentas.length}</span></p>
+              <p className="font-bold text-lg">Total de Ventas: <span className="font-normal text-gray-800">{moneda.format(totalVisible)}</span></p>
+              <p className="font-bold text-lg">Número de Ventas: <span className="font-normal text-gray-800">{ventasFiltradas.length}</span></p>
             </div>
 
             <table className="w-full text-center border-collapse border border-gray-300 bg-white">
@@ -544,7 +647,7 @@ export default function Reportes() {
                 </tr>
               </thead>
               <tbody>
-                {dataVentas.map((v, i) => (
+                {ventasFiltradas.map(v => (
                   <tr key={v.id} className="border-b border-gray-300 odd:bg-[#f6fcf8] even:bg-white">
                     <td className="p-3 border border-gray-300 text-sm font-medium">{v.id}</td>
                     <td className="p-3 border border-gray-300 text-sm">{v.cliente}</td>
@@ -565,7 +668,7 @@ export default function Reportes() {
 
             <div className="mt-12 flex justify-between text-sm font-bold text-gray-600 border-t pt-4">
               <p>Página 1 de 1</p>
-              <p>Total de ventas mostradas en esta página: {dataVentas.length} de {dataVentas.length}</p>
+              <p>Total de ventas mostradas en esta página: {ventasFiltradas.length}</p>
             </div>
           </div>
         )}

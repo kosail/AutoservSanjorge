@@ -45,6 +45,7 @@ export default function RemisionTecnico() {
   // Listas dinámicas de trabajos y refacciones
   const [trabajos, setTrabajos] = useState([]);
   const [refacciones, setRefacciones] = useState([]);
+  const faltanRefacciones = refacciones.length === 0;
 
   // Inputs para agregar nuevos ítems sobre la marcha
   const [selectedServicioId, setSelectedServicioId] = useState('');
@@ -342,24 +343,13 @@ export default function RemisionTecnico() {
       toast.warning('Por favor selecciona un vehículo para emitir la orden');
       return;
     }
-    if (trabajos.length === 0 && refacciones.length === 0) {
-      toast.warning('Agrega al menos un servicio o refacción a la orden');
+    if (faltanRefacciones) {
+      toast.warning('Agrega al menos una refacción antes de emitir la orden.');
       return;
     }
 
     try {
       setSubmitting(true);
-
-      const checklistPredeterminado = [
-        { id: 'aceite', item: 'Nivel y calidad de aceite de motor', estado: 'Pendiente', nota: '' },
-        { id: 'frenos', item: 'Estado de balatas y discos de freno', estado: 'Pendiente', nota: '' },
-        { id: 'llantas', item: 'Presión y desgaste de neumáticos', estado: 'Pendiente', nota: '' },
-        { id: 'bateria', item: 'Voltaje y limpieza de bornes de batería', estado: 'Pendiente', nota: '' },
-        { id: 'refrigerante', item: 'Nivel de anticongelante y fuga de mangueras', estado: 'Pendiente', nota: '' },
-        { id: 'filtros', item: 'Filtro de aire y filtro de cabina', estado: 'Pendiente', nota: '' },
-        { id: 'luces', item: 'Sistema de luces (Altas, Bajas, Intermitentes, Stop)', estado: 'Pendiente', nota: '' },
-        { id: 'suspension', item: 'Amortiguadores y bujes de suspensión', estado: 'Pendiente', nota: '' },
-      ];
 
       const serviciosPayload = trabajos.map(t => ({
         id: t.id,
@@ -383,7 +373,6 @@ export default function RemisionTecnico() {
         fecha: fecha,
         observaciones: observaciones || 'Orden de servicio generada en estación técnica. Pendiente de aprobación.',
         costo_final: totalRemision,
-        checklist: checklistPredeterminado,
         servicios: serviciosPayload,
         productos: productosPayload
       };
@@ -876,7 +865,7 @@ export default function RemisionTecnico() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-slate-900 tracking-tight">Requisición de Refacciones y Materiales</h2>
-                    <p className="text-xs text-slate-500">Solicitud directa de repuestos al almacén o compra especial</p>
+                    <p className="text-xs text-slate-500">Obligatoria. Agrega al menos una refacción del inventario o una pieza especial.</p>
                   </div>
                 </div>
 
@@ -1062,9 +1051,9 @@ export default function RemisionTecnico() {
                   <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center mb-2">
                     📦
                   </div>
-                  <h4 className="text-sm font-bold text-slate-700">Sin refacciones requeridas</h4>
+                  <h4 className="text-sm font-bold text-slate-700">Sin refacciones agregadas</h4>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
-                    Si el servicio no requiere repuestos, puedes omitir esta sección o agregar piezas según tu diagnóstico.
+                    Usa «Requerir Pieza» o «Pedir» para agregarla a la requisición.
                   </p>
                 </div>
               )}
@@ -1164,14 +1153,15 @@ export default function RemisionTecnico() {
 
               {/* Botón de Emisión Principal */}
               <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div className="text-xs text-slate-500 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Listo para enviar a la mesa de trabajo de Mantenimiento
+                <div id="estado-requisicion" role="status" className="text-xs text-slate-600 flex items-center gap-2">
+                  <span aria-hidden="true" className={`w-2 h-2 shrink-0 rounded-full ${faltanRefacciones ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                  {faltanRefacciones ? 'Agrega al menos una refacción para emitir la orden.' : 'Requisición con refacciones agregadas.'}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || faltanRefacciones}
+                  aria-describedby="estado-requisicion"
                   className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-600/25 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   {submitting ? (
