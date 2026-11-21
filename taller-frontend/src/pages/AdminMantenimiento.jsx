@@ -12,8 +12,15 @@ import {
   updateMantenimientoEstado,
   fetchCitas,
   updateCita,
-  fetchProductosCompatibles
+  fetchProductosCompatibles,
+  exportarMantenimiento,
+  exportarMantenimientos
 } from '../utils/api';
+import {
+  descargarBlob,
+  listadoTieneDatos,
+  MENSAJE_LISTADO_VACIO,
+} from '../utils/descargas';
 
 const DEFAULT_CHECKLIST = [
   { id: 'aceite', item: 'Nivel y calidad de aceite de motor', estado: 'Pendiente', nota: '' },
@@ -30,6 +37,7 @@ export default function AdminMantenimiento() {
   const toast = useToast();
   const [mantenimientos, setMantenimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportando, setExportando] = useState(null);
   const [citasPendientes, setCitasPendientes] = useState([]);
   const [selectedCitaId, setSelectedCitaId] = useState('');
 
@@ -454,6 +462,38 @@ export default function AdminMantenimiento() {
     }
   };
 
+  const ejecutarExportacion = async (clave, accion) => {
+    if (exportando) return;
+    setExportando(clave);
+    try {
+      const { blob, filename } = await accion();
+      descargarBlob(blob, filename);
+      toast.success('Archivo descargado correctamente');
+    } catch (err) {
+      toast.error(err.message, 'Error al exportar');
+    } finally {
+      setExportando(null);
+    }
+  };
+
+  const exportarMantenimientoIndividual = (mantenimiento, formato) => {
+    const clave = `mantenimiento-${mantenimiento.id}-${formato}`;
+    return ejecutarExportacion(clave, () => exportarMantenimiento(mantenimiento.id, formato));
+  };
+
+  const exportarListado = (formato) => {
+    if (!listadoTieneDatos(mantenimientosFiltrados)) {
+      toast.warning(MENSAJE_LISTADO_VACIO);
+      return;
+    }
+
+    const estado = filtroEstado === 'Todos' ? '' : filtroEstado;
+    return ejecutarExportacion(
+      `listado-${formato}`,
+      () => exportarMantenimientos(formato, estado)
+    );
+  };
+
   return (
     <AdminLayout activeTab="mantenimiento">
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -461,6 +501,24 @@ export default function AdminMantenimiento() {
           <div>
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1">Centro de Mantenimiento & Inspección</h2>
             <p className="text-gray-500 text-sm">Gestiona la hoja de requisitos en tiempo real y aprueba órdenes de servicio enviadas por técnicos</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => exportarListado('pdf')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-pdf' ? 'Generando PDF...' : 'Exportar listado PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() => exportarListado('xlsx')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-xlsx' ? 'Generando Excel...' : 'Exportar listado Excel'}
+            </button>
           </div>
         </div>
 
@@ -584,6 +642,26 @@ export default function AdminMantenimiento() {
                         >
                           <span>📋 Hoja de Requisitos (Tiempo Real)</span>
                           <span className="bg-indigo-800/60 px-2 py-0.5 rounded-lg text-[10px] font-mono">{porcentajeProgreso}%</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'pdf')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar PDF"
+                          className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-pdf` ? '...' : 'PDF'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'xlsx')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar Excel"
+                          className="border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-xlsx` ? '...' : 'Excel'}
                         </button>
 
                         <div className="text-right">
