@@ -39,6 +39,23 @@ npm run smoke:test
 
 Ejecutar dos veces `migrate:all` es la comprobación de idempotencia usada por el pipeline.
 
+## Supabase SQL Editor con base ya existente
+
+Si la aplicación ya está desplegada y la base ya existe, no se debe ejecutar ningún seed ni recrear tablas.
+
+Copiar y pegar completo el contenido de:
+
+`backend/supabase_migration_existing_db.sql`
+
+Ese script:
+
+- Consolida marcas duplicadas.
+- Reasigna modelos, vehículos y compatibilidades.
+- Crea el índice único de marcas.
+- Crea `schema_migrations`.
+- Registra `001_marcas_unicas`.
+- Es idempotente y se puede ejecutar más de una vez.
+
 ## Validación
 
 `validate:schema` comprueba:

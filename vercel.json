@@ -5,6 +5,11 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "taller-frontend/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/assets/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

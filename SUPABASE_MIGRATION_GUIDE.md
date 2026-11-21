@@ -66,6 +66,8 @@ npm run smoke:test
 
 El orden completo y el detalle de las migraciones están en [backend/MIGRATIONS.md](backend/MIGRATIONS.md). `migrate:supabase` se conserva como alias del nuevo runner.
 
+Si la base ya existe y solo necesitas aplicar los cambios desde el SQL Editor de Supabase, copia y pega completo el archivo [backend/supabase_migration_existing_db.sql](backend/supabase_migration_existing_db.sql). No ejecutes seeds ni recrees tablas.
+
 ---
 
 ## 🚀 4. Despliegue en Vercel
