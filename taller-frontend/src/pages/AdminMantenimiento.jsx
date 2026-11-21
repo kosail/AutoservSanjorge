@@ -12,24 +12,21 @@ import {
   updateMantenimientoEstado,
   fetchCitas,
   updateCita,
-  fetchProductosCompatibles
+  fetchProductosCompatibles,
+  exportarMantenimiento,
+  exportarMantenimientos
 } from '../utils/api';
-
-const DEFAULT_CHECKLIST = [
-  { id: 'aceite', item: 'Nivel y calidad de aceite de motor', estado: 'Pendiente', nota: '' },
-  { id: 'frenos', item: 'Estado de balatas y discos de freno', estado: 'Pendiente', nota: '' },
-  { id: 'llantas', item: 'Presión y desgaste de neumáticos', estado: 'Pendiente', nota: '' },
-  { id: 'bateria', item: 'Voltaje y limpieza de bornes de batería', estado: 'Pendiente', nota: '' },
-  { id: 'refrigerante', item: 'Nivel de anticongelante y fuga de mangueras', estado: 'Pendiente', nota: '' },
-  { id: 'filtros', item: 'Filtro de aire y filtro de cabina', estado: 'Pendiente', nota: '' },
-  { id: 'luces', item: 'Sistema de luces (Altas, Bajas, Intermitentes, Stop)', estado: 'Pendiente', nota: '' },
-  { id: 'suspension', item: 'Amortiguadores y bujes de suspensión', estado: 'Pendiente', nota: '' },
-];
+import {
+  descargarBlob,
+  listadoTieneDatos,
+  MENSAJE_LISTADO_VACIO,
+} from '../utils/descargas';
 
 export default function AdminMantenimiento() {
   const toast = useToast();
   const [mantenimientos, setMantenimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportando, setExportando] = useState(null);
   const [citasPendientes, setCitasPendientes] = useState([]);
   const [selectedCitaId, setSelectedCitaId] = useState('');
 
@@ -271,6 +268,10 @@ export default function AdminMantenimiento() {
       toast.warning('Selecciona un vehículo antes de continuar.');
       return;
     }
+    if (refacciones.length === 0) {
+      toast.warning('Agrega al menos una refacción antes de registrar el mantenimiento.');
+      return;
+    }
 
     try {
       const payload = {
@@ -281,7 +282,6 @@ export default function AdminMantenimiento() {
         fecha: nuevo.fecha,
         observaciones: nuevo.observaciones,
         costo_final: calcularTotal(),
-        checklist: DEFAULT_CHECKLIST,
         servicios: trabajos.map(t => ({ id: t.id, precio: t.precio, descripcion: t.descripcion })),
         productos: refacciones.map(r => ({ id: r.id, cantidad: r.cantidad, precio: r.precio_unitario || r.precio }))
       };
@@ -325,8 +325,7 @@ export default function AdminMantenimiento() {
   // ---------------------------------------------------------------------------
   const abrirHojaTrabajo = (mant) => {
     setMantActivo(mant);
-    const initialChecklist = mant.checklist && mant.checklist.length > 0 ? mant.checklist : DEFAULT_CHECKLIST;
-    setChecklistHoja(initialChecklist);
+    setChecklistHoja(mant.checklist);
     setTrabajosHoja(mant.servicios ? mant.servicios.map(s => ({ ...s, precio: s.precio })) : []);
     setRefaccionesHoja(mant.productos ? mant.productos.map(p => ({ ...p, precio_unitario: p.precio })) : []);
     setObservacionesHoja(mant.observaciones || '');
@@ -405,6 +404,10 @@ export default function AdminMantenimiento() {
 
   const guardarHojaTrabajo = async (nuevoEstado = null) => {
     if (!mantActivo) return;
+    if (refaccionesHoja.length === 0) {
+      toast.warning('Agrega al menos una refacción en la hoja de trabajo.');
+      return;
+    }
     setGuardandoHoja(true);
     try {
       const estadoFinal = nuevoEstado || estadoHoja;
@@ -416,15 +419,13 @@ export default function AdminMantenimiento() {
         costo_final: calcularTotalHoja(),
         checklist: checklistHoja,
         servicios: trabajosHoja.map(t => ({ id: t.id, precio: t.precio, descripcion: t.descripcion })),
-        productos: refaccionesHoja.map(r => ({ id: r.id, cantidad: r.cantidad, precio: r.precio_unitario }))
+        productos: refaccionesHoja.map(r => ({ id: r.id, nombre: r.nombre, cantidad: r.cantidad, precio: r.precio_unitario }))
       };
 
       await updateMantenimiento(mantActivo.id, payload);
       await loadData();
       toast.success(nuevoEstado === 'Completado' ? '¡Mantenimiento completado exitosamente!' : 'Hoja de trabajo guardada en tiempo real');
-      if (nuevoEstado === 'Completado') {
-        cerrarHojaTrabajo();
-      }
+      cerrarHojaTrabajo();
     } catch (err) {
       toast.error(err.message, 'Error al guardar hoja de trabajo');
     } finally {
@@ -444,14 +445,50 @@ export default function AdminMantenimiento() {
     return m.estado === filtroEstado;
   });
 
-  const aprobarOrdenServicio = async (mId, nuevoEstado = 'En proceso') => {
+  const aprobarOrdenServicio = async (orden, nuevoEstado = 'En proceso') => {
+    if (!orden.productos?.length) {
+      toast.warning('Abre la hoja de requisitos y agrega una refacción para aprobar la orden.');
+      return;
+    }
     try {
-      await updateMantenimientoEstado(mId, nuevoEstado);
+      await updateMantenimientoEstado(orden.id, nuevoEstado);
       await loadData();
       toast.success(nuevoEstado === 'Completado' ? 'Orden de Servicio aprobada y completada' : 'Orden de Servicio aprobada y puesta en proceso');
     } catch (err) {
       toast.error(err.message, 'Error al aprobar Orden de Servicio');
     }
+  };
+
+  const ejecutarExportacion = async (clave, accion) => {
+    if (exportando) return;
+    setExportando(clave);
+    try {
+      const { blob, filename } = await accion();
+      descargarBlob(blob, filename);
+      toast.success('Archivo descargado correctamente');
+    } catch (err) {
+      toast.error(err.message, 'Error al exportar');
+    } finally {
+      setExportando(null);
+    }
+  };
+
+  const exportarMantenimientoIndividual = (mantenimiento, formato) => {
+    const clave = `mantenimiento-${mantenimiento.id}-${formato}`;
+    return ejecutarExportacion(clave, () => exportarMantenimiento(mantenimiento.id, formato));
+  };
+
+  const exportarListado = (formato) => {
+    if (!listadoTieneDatos(mantenimientosFiltrados)) {
+      toast.warning(MENSAJE_LISTADO_VACIO);
+      return;
+    }
+
+    const estado = filtroEstado === 'Todos' ? '' : filtroEstado;
+    return ejecutarExportacion(
+      `listado-${formato}`,
+      () => exportarMantenimientos(formato, estado)
+    );
   };
 
   return (
@@ -461,6 +498,24 @@ export default function AdminMantenimiento() {
           <div>
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1">Centro de Mantenimiento & Inspección</h2>
             <p className="text-gray-500 text-sm">Gestiona la hoja de requisitos en tiempo real y aprueba órdenes de servicio enviadas por técnicos</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => exportarListado('pdf')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-pdf' ? 'Generando PDF...' : 'Exportar listado PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() => exportarListado('xlsx')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-xlsx' ? 'Generando Excel...' : 'Exportar listado Excel'}
+            </button>
           </div>
         </div>
 
@@ -515,8 +570,8 @@ export default function AdminMantenimiento() {
               mantenimientosFiltrados.map(m => {
                 const servicioBaseName = m.servicios && m.servicios.length > 0 ? m.servicios[0].nombre : 'Mantenimiento General';
                 const partesArray = m.productos ? m.productos.map(p => `${p.nombre} x${p.cantidad}`) : [];
-                const totalItemsChecklist = m.checklist ? m.checklist.length : 8;
-                const itemsListos = m.checklist ? m.checklist.filter(c => c.estado === 'OK' || c.estado === 'Cambiado').length : 0;
+                const totalItemsChecklist = m.checklist.length;
+                const itemsListos = m.checklist.filter(c => c.estado === 'OK' || c.estado === 'Cambiado').length;
                 const porcentajeProgreso = Math.round((itemsListos / totalItemsChecklist) * 100);
                 const esPendienteRemision = m.estado === 'Pendiente de Aprobación';
 
@@ -532,14 +587,14 @@ export default function AdminMantenimiento() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => aprobarOrdenServicio(m.id, 'En proceso')}
+                            onClick={() => aprobarOrdenServicio(m, 'En proceso')}
                             className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
                           >
                             ✓ Aprobar Orden
                           </button>
                           <button
                             type="button"
-                            onClick={() => aprobarOrdenServicio(m.id, 'Completado')}
+                            onClick={() => aprobarOrdenServicio(m, 'Completado')}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
                           >
                             ✓ Aprobar & Completar
@@ -576,7 +631,7 @@ export default function AdminMantenimiento() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                      <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
                         <button
                           type="button"
                           onClick={() => abrirHojaTrabajo(m)}
@@ -584,6 +639,26 @@ export default function AdminMantenimiento() {
                         >
                           <span>📋 Hoja de Requisitos (Tiempo Real)</span>
                           <span className="bg-indigo-800/60 px-2 py-0.5 rounded-lg text-[10px] font-mono">{porcentajeProgreso}%</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'pdf')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar PDF"
+                          className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-pdf` ? '...' : 'PDF'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'xlsx')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar Excel"
+                          className="border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-xlsx` ? '...' : 'Excel'}
                         </button>
 
                         <div className="text-right">
@@ -638,7 +713,7 @@ export default function AdminMantenimiento() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh] border border-slate-100 animate-fadeIn">
             
             {/* Header Modal */}
-            <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
+            <div className="bg-slate-900 text-white px-4 py-4 sm:p-6 flex flex-wrap justify-between items-center gap-3 shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold">
                   📋
@@ -653,7 +728,7 @@ export default function AdminMantenimiento() {
                 </div>
               </div>
               
-              <button onClick={cerrarHojaTrabajo} className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+              <button type="button" aria-label="Cerrar orden" onClick={cerrarHojaTrabajo} disabled={guardandoHoja} className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition disabled:opacity-50">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -808,6 +883,9 @@ export default function AdminMantenimiento() {
                 <h4 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
                   <span>🔩</span> Refacciones y Repuestos Utilizados (Tiempo Real)
                 </h4>
+                {!refaccionesHoja.length && (
+                  <p className="mb-3 text-xs text-amber-900">Agrega al menos una refacción para guardar o completar.</p>
+                )}
 
                 <div className="space-y-2 mb-3">
                   {refaccionesHoja.map((r, idx) => (
@@ -877,7 +955,8 @@ export default function AdminMantenimiento() {
               <button
                 type="button"
                 onClick={cerrarHojaTrabajo}
-                className="w-full md:w-auto px-5 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition"
+                disabled={guardandoHoja}
+                className="w-full md:w-auto px-5 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -1061,7 +1140,7 @@ export default function AdminMantenimiento() {
 
                 <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-6 mb-6">
                   <h3 className="text-sm font-bold text-yellow-800 flex items-center gap-2 mb-4">
-                    Partes y Refacciones Utilizadas
+                    Partes y Refacciones Utilizadas (obligatorio)
                   </h3>
 
                   {refacciones.map(r => (

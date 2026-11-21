@@ -52,9 +52,10 @@ const quoteIdentifier = (id) => `"${id}"`;
  */
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, lastname, apellido, email, password, phone } = req.body;
+    const rawLastname = typeof lastname === 'string' ? lastname : (typeof apellido === 'string' ? apellido : '');
 
-    if (!validateName(name) || !validateEmail(email) || !validatePassword(password)) {
+    if (!validateName(name) || !validateName(rawLastname) || !validateEmail(email) || !validatePassword(password)) {
       return res.status(400).json({ error: 'Datos de registro inválidos' });
     }
     if (phone && !validatePhone(phone)) {
@@ -73,8 +74,8 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      `INSERT INTO Usuarios (${quoteIdentifier(userRoleIdColumn)}, email, ${quoteIdentifier(userPasswordColumn)}, nombre, telefono) VALUES ($1, $2, $3, $4, $5)`,
-      [roleRow[0].idroles, email.trim(), hashedPassword, name.trim(), phone || '']
+      `INSERT INTO Usuarios (${quoteIdentifier(userRoleIdColumn)}, email, ${quoteIdentifier(userPasswordColumn)}, nombre, apellido, telefono) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [roleRow[0].idroles, email.trim(), hashedPassword, name.trim(), rawLastname.trim(), phone || '']
     );
 
     res.json({ success: true });
@@ -85,7 +86,7 @@ router.post('/register', async (req, res) => {
 });
 
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../middleware/auth');
+const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 
 // ---------------------------------------------------------------------------
 // POST /login
@@ -93,9 +94,9 @@ const { JWT_SECRET } = require('../middleware/auth');
 
 /**
  * POST /api/auth/login
- * Autentica un usuario con email y contraseña (bcrypt).
+ * Autentica un usuario con email y contraseña (bcrypt) y emite el token JWT.
  * @body {{ email, password }}
- * @returns {{ id, email, name, phone, role, permissions, token }}
+ * @returns {{ id, email, name, lastname, phone, role, permissions, token }}
  */
 router.post('/login', async (req, res) => {
   try {
@@ -107,7 +108,7 @@ router.post('/login', async (req, res) => {
 
     const passwordReference = `u.${quoteIdentifier(userPasswordColumn)} AS passwordhash`;
     const { rows } = await pool.query(
-      `SELECT u.idUsuarios, u.email, ${passwordReference}, u.nombre, u.telefono, r.nombre AS rolename, r.permisos
+      `SELECT u.idUsuarios, u.email, ${passwordReference}, u.nombre, u.apellido, u.telefono, r.nombre AS rolename, r.permisos
        FROM Usuarios u
        JOIN Roles r ON u.${userRoleIdColumn} = r.idRoles
        WHERE LOWER(u.email) = LOWER($1)`,
@@ -137,10 +138,11 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({
+    return res.json({
       id: user.idusuarios,
       email: user.email,
       name: user.nombre,
+      lastname: user.apellido || '',
       phone: user.telefono || '',
       role: user.rolename,
       permissions,
@@ -156,8 +158,6 @@ router.post('/login', async (req, res) => {
 // GET /me (Verificación de token y sesión activa)
 // ---------------------------------------------------------------------------
 
-const { authenticateToken } = require('../middleware/auth');
-
 /**
  * GET /api/auth/me
  * Verifica el JWT y devuelve los datos actualizados del usuario autenticado.
@@ -165,7 +165,7 @@ const { authenticateToken } = require('../middleware/auth');
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT u.idUsuarios, u.email, u.nombre, u.telefono, r.nombre AS rolename, r.permisos
+      `SELECT u.idUsuarios, u.email, u.nombre, u.apellido, u.telefono, r.nombre AS rolename, r.permisos
        FROM Usuarios u
        JOIN Roles r ON u.${userRoleIdColumn} = r.idRoles
        WHERE u.idUsuarios = $1`,
@@ -183,6 +183,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       id: user.idusuarios,
       email: user.email,
       name: user.nombre,
+      lastname: user.apellido || '',
       phone: user.telefono || '',
       role: user.rolename,
       permissions,

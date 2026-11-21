@@ -18,8 +18,11 @@ CREATE TABLE IF NOT EXISTS Usuarios (
   email VARCHAR(100) UNIQUE NOT NULL,
   contrasena VARCHAR(255) NOT NULL,
   nombre VARCHAR(100),
+  apellido VARCHAR(100),
   telefono VARCHAR(20)
 );
+
+ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS apellido VARCHAR(100);
 
 -- 3. Catálogo de Marcas de Vehículos
 CREATE TABLE IF NOT EXISTS Marca (
@@ -173,6 +176,34 @@ CREATE TABLE IF NOT EXISTS Productos_compatibilidad (
 CREATE INDEX IF NOT EXISTS idx_compatibilidad_modelos ON Productos_compatibilidad(idModelos);
 CREATE INDEX IF NOT EXISTS idx_compatibilidad_marcas ON Productos_compatibilidad(idMarcas);
 
+DO $$
+DECLARE
+  grupo RECORD;
+  duplicate_ids INTEGER[];
+BEGIN
+  FOR grupo IN
+    SELECT LOWER(TRIM(nombre)) AS clave, MIN(idMarcas) AS keep_id
+    FROM Marca
+    WHERE nombre IS NOT NULL
+    GROUP BY LOWER(TRIM(nombre))
+    HAVING COUNT(*) > 1
+  LOOP
+    SELECT ARRAY_AGG(idMarcas)
+    INTO duplicate_ids
+    FROM Marca
+    WHERE LOWER(TRIM(nombre)) = grupo.clave
+      AND idMarcas <> grupo.keep_id;
+
+    UPDATE Modelos SET idMarcas = grupo.keep_id WHERE idMarcas = ANY(duplicate_ids);
+    UPDATE Vehiculos SET idMarcas = grupo.keep_id WHERE idMarcas = ANY(duplicate_ids);
+    UPDATE Productos_compatibilidad SET idMarcas = grupo.keep_id WHERE idMarcas = ANY(duplicate_ids);
+    DELETE FROM Marca WHERE idMarcas = ANY(duplicate_ids);
+  END LOOP;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS marca_nombre_normalizado_key
+ON Marca (LOWER(TRIM(nombre)));
+
 -- 19. Facturas
 CREATE TABLE IF NOT EXISTS Factura (
   idFactura SERIAL PRIMARY KEY,
@@ -191,6 +222,10 @@ CREATE TABLE IF NOT EXISTS Mantenimiento (
   observaciones TEXT,
   costo_final NUMERIC DEFAULT 0
 );
+
+ALTER TABLE Mantenimiento
+  ADD COLUMN IF NOT EXISTS checklist TEXT,
+  ADD COLUMN IF NOT EXISTS refacciones_especiales JSONB;
 
 -- 21. Detalle Mantenimiento Servicios
 CREATE TABLE IF NOT EXISTS DetalleMantenimientoServicios (
@@ -248,8 +283,8 @@ VALUES
   ('Cliente', 'Acceso al portal de clientes', '["Cotizaciones","Reportes"]')
 ON CONFLICT DO NOTHING;
 
--- Insertar o actualizar usuario Administrador por defecto (Email: admin@admin.com / Contraseña: admin123)
-DELETE FROM Usuarios WHERE email = 'admin@admin.com';
+-- Insertar usuario Administrador por defecto si no existe (Email: admin@admin.com / Contraseña: admin123)
 INSERT INTO Usuarios (idRoles, email, contrasena, nombre, telefono)
 SELECT idRoles, 'admin@admin.com', '$2a$10$5xXZeYGdGAboPDX9LleGnPs.HRO9rRaJhTD3G9zwP2P', 'Administrador', ''
-FROM Roles WHERE nombre = 'Administrador';
+FROM Roles WHERE nombre = 'Administrador'
+ON CONFLICT DO NOTHING;

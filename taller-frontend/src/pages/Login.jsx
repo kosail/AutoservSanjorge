@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
@@ -10,6 +10,7 @@ function Login() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -64,7 +65,7 @@ function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side with blue background */}
+      {/* Lado izquierdo */}
       <div className="hidden md:flex md:w-1/2 flex-col justify-between p-12"
         style={{
           backgroundImage: 'linear-gradient(rgba(10,24,60,0.75), rgba(10,24,60,0.75)),url("/assets/f1.jpeg")',
@@ -87,7 +88,7 @@ function Login() {
         </div>
       </div>
 
-      {/* Right side with login form */}
+      {/* Lado derecho con formulario */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 bg-gray-50">
         <div className="w-full max-w-md">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Bienvenido de vuelta</h1>
@@ -156,7 +157,7 @@ function Login() {
               disabled={loading || !isLoginFormComplete()}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? "Verificando..." : "Iniciar sesión"}
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
           </form>
 
@@ -169,7 +170,6 @@ function Login() {
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </div>

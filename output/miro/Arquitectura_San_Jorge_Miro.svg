@@ -1,0 +1,240 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1400" viewBox="0 0 2600 1400"><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6" fill="none" stroke="#56616e" stroke-width="1.5"/></marker></defs><rect width="2600" height="1400" fill="white"/>
+<rect x='30' y='30' width='2540' height='130' fill='#FFFFFF' stroke='#FFFFFF' stroke-width='2' />
+<text x='1300' y='88' font-family='Arial, sans-serif' font-size='46' font-weight='700' fill='#222936' text-anchor='middle'>
+<tspan x='1300' dy='0'>Arquitectura de Software</tspan>
+</text>
+<text x='1300' y='130' font-family='Arial, sans-serif' font-size='25' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='1300' dy='0'>Autoservicio San Jorge | React + Express + PostgreSQL</tspan>
+</text>
+<rect x='40' y='205' width='710' height='880' fill='#FFFFFF' stroke='#9CA4AF' stroke-width='2' stroke-dasharray="10 8"/>
+<rect x='750' y='205' width='1015' height='880' fill='#FFFFFF' stroke='#9CA4AF' stroke-width='2' stroke-dasharray="10 8"/>
+<rect x='1765' y='205' width='795' height='880' fill='#FFFFFF' stroke='#9CA4AF' stroke-width='2' stroke-dasharray="10 8"/>
+<rect x='500' y='207' width='248' height='876' fill='#F2F2F5' stroke='#F2F2F5' stroke-width='2' />
+<rect x='1767' y='207' width='248' height='876' fill='#F2F2F5' stroke='#F2F2F5' stroke-width='2' />
+<text x='625' y='257' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='625' dy='0'>BACKEND</tspan>
+</text>
+<text x='1255' y='258' font-family='Arial, sans-serif' font-size='26' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1255' dy='0'>VERCEL</tspan>
+</text>
+<text x='1891.5' y='254' font-family='Arial, sans-serif' font-size='22' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1891.5' dy='0'>DATOS / SERVICIOS</tspan>
+</text>
+<rect x='580' y='320' width='80' height='90' fill='#FFFFFF' stroke='#D52178' stroke-width='2' />
+<line x1='595' y1='346' x2='645' y2='346' stroke='#D52178' stroke-width='3'  />
+<line x1='595' y1='365' x2='645' y2='365' stroke='#D52178' stroke-width='3'  />
+<line x1='595' y1='384' x2='645' y2='384' stroke='#D52178' stroke-width='3'  />
+<text x='627' y='449' font-family='Arial, sans-serif' font-size='24' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='627' dy='0'>Gestión del taller</tspan>
+</text>
+<text x='68' y='345' font-family='Arial, sans-serif' font-size='25' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='68' dy='0'>Clientes y vehículos</tspan>
+<tspan x='68' dy='28.75'>Citas y cotizaciones</tspan>
+<tspan x='68' dy='28.75'>Servicios y mantenimiento</tspan>
+<tspan x='68' dy='28.75'>Inventario, compras y ventas</tspan>
+<tspan x='68' dy='28.75'>Reportes y dashboard</tspan>
+</text>
+<ellipse cx='620' cy='602.5' rx='22' ry='27.5' fill='none' stroke='#C72B56' stroke-width='4'/>
+<rect x='582' y='605' width='76' height='58' fill='#FFFFFF' stroke='#C72B56' stroke-width='2' />
+<ellipse cx='620' cy='628' rx='6' ry='6' fill='none' stroke='#C72B56' stroke-width='4'/>
+<line x1='620' y1='634' x2='620' y2='647' stroke='#C72B56' stroke-width='3'  />
+<text x='627' y='704' font-family='Arial, sans-serif' font-size='24' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='627' dy='0'>Autenticación</tspan>
+<tspan x='627' dy='27.6'>y sesión</tspan>
+</text>
+<text x='68' y='613' font-family='Arial, sans-serif' font-size='25' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='68' dy='0'>JWT de 24 horas</tspan>
+<tspan x='68' dy='28.75'>Contraseñas con bcrypt</tspan>
+<tspan x='68' dy='28.75'>Usuarios y Roles</tspan>
+<tspan x='68' dy='28.75'>/api/auth/me</tspan>
+</text>
+<rect x='580' y='850' width='80' height='90' fill='#FFFFFF' stroke='#D52178' stroke-width='2' />
+<line x1='595' y1='876' x2='645' y2='876' stroke='#D52178' stroke-width='3'  />
+<line x1='595' y1='895' x2='645' y2='895' stroke='#D52178' stroke-width='3'  />
+<line x1='595' y1='914' x2='645' y2='914' stroke='#D52178' stroke-width='3'  />
+<text x='627' y='979' font-family='Arial, sans-serif' font-size='24' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='627' dy='0'>Validaciones</tspan>
+<tspan x='627' dy='27.6'>y transacciones</tspan>
+</text>
+<text x='68' y='887' font-family='Arial, sans-serif' font-size='25' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='68' dy='0'>Reglas del negocio</tspan>
+<tspan x='68' dy='28.75'>SQL parametrizado</tspan>
+<tspan x='68' dy='28.75'>COMMIT / ROLLBACK</tspan>
+<tspan x='68' dy='28.75'>Consistencia del inventario</tspan>
+</text>
+<ellipse cx='900' cy='360' rx='18' ry='18' fill='none' stroke='#C72B56' stroke-width='4'/>
+<ellipse cx='900' cy='410' rx='40' ry='25' fill='none' stroke='#C72B56' stroke-width='4'/>
+<rect x='860' y='412' width='80' height='29' fill='#FFFFFF' stroke='#FFFFFF' stroke-width='2' />
+<line x1='860' y1='412' x2='940' y2='412' stroke='#C72B56' stroke-width='4'  />
+<text x='912.5' y='472' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='912.5' dy='0'>Cliente / Personal</tspan>
+</text>
+<text x='912.5' y='505' font-family='Arial, sans-serif' font-size='20' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='912.5' dy='0'>Administrador y Técnico</tspan>
+</text>
+<rect x='1170' y='340' width='100' height='78' fill='#FFFFFF' stroke='#D52178' stroke-width='2' />
+<line x1='1170' y1='359' x2='1270' y2='359' stroke='#D52178' stroke-width='3'  />
+<text x='1176' y='353' font-family='Arial, sans-serif' font-size='18' font-weight='400' fill='#D52178' text-anchor='start'>
+<tspan x='1176' dy='0'>• • •</tspan>
+</text>
+<text x='1184' y='402' font-family='Arial, sans-serif' font-size='32' font-weight='700' fill='#D52178' text-anchor='start'>
+<tspan x='1184' dy='0'>&lt;/&gt;</tspan>
+</text>
+<text x='1220' y='473' font-family='Arial, sans-serif' font-size='26' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1220' dy='0'>Navegador web</tspan>
+</text>
+<text x='1220' y='514' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#242B36' text-anchor='middle'>
+<tspan x='1220' dy='0'>SPA React 19 + Vite</tspan>
+<tspan x='1220' dy='27.6'>Contenido servido por CDN</tspan>
+</text>
+<ellipse cx='1535' cy='389' rx='25' ry='24' fill='none' stroke='#D52178' stroke-width='4'/>
+<ellipse cx='1564.5' cy='374' rx='27.5' ry='30' fill='none' stroke='#D52178' stroke-width='4'/>
+<ellipse cx='1592' cy='390.5' rx='21' ry='22.5' fill='none' stroke='#D52178' stroke-width='4'/>
+<line x1='1528' y1='415' x2='1599' y2='415' stroke='#D52178' stroke-width='3'  />
+<text x='1565' y='473' font-family='Arial, sans-serif' font-size='26' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1565' dy='0'>CDN / Edge</tspan>
+</text>
+<text x='1570' y='514' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#242B36' text-anchor='middle'>
+<tspan x='1570' dy='0'>Assets de la SPA</tspan>
+<tspan x='1570' dy='27.6'>Distribución en Vercel</tspan>
+</text>
+<line x1='956' y1='386' x2='1150' y2='386' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<text x='988' y='370' font-family='Arial, sans-serif' font-size='21' font-weight='400' fill='#657080' text-anchor='start'>
+<tspan x='988' dy='0'>HTTPS</tspan>
+</text>
+<line x1='1490' y1='386' x2='1290' y2='386' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<ellipse cx='1220' cy='652.5' rx='22' ry='27.5' fill='none' stroke='#C72B56' stroke-width='4'/>
+<rect x='1182' y='655' width='76' height='58' fill='#FFFFFF' stroke='#C72B56' stroke-width='2' />
+<ellipse cx='1220' cy='678' rx='6' ry='6' fill='none' stroke='#C72B56' stroke-width='4'/>
+<line x1='1220' y1='684' x2='1220' y2='697' stroke='#C72B56' stroke-width='3'  />
+<text x='1220' y='756' font-family='Arial, sans-serif' font-size='26' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1220' dy='0'>HTTP / HTTPS</tspan>
+</text>
+<text x='1220' y='796' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='1220' dy='0'>/api · JSON · fetch</tspan>
+</text>
+<line x1='1220' y1='578' x2='1220' y2='609' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='1220' y1='827' x2='1220' y2='879' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<ellipse cx='1195' cy='944' rx='25' ry='24' fill='none' stroke='#D52178' stroke-width='4'/>
+<ellipse cx='1224.5' cy='929' rx='27.5' ry='30' fill='none' stroke='#D52178' stroke-width='4'/>
+<ellipse cx='1252' cy='945.5' rx='21' ry='22.5' fill='none' stroke='#D52178' stroke-width='4'/>
+<line x1='1188' y1='970' x2='1259' y2='970' stroke='#D52178' stroke-width='3'  />
+<text x='1220' y='1019' font-family='Arial, sans-serif' font-size='27' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1220' dy='0'>API Express</tspan>
+</text>
+<text x='1275' y='1053' font-family='Arial, sans-serif' font-size='23' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='1275' dy='0'>Node.js 22 · api/index.js · función serverless</tspan>
+</text>
+<line x1='1115' y1='940' x2='800' y2='940' stroke='#56616E' stroke-width='3'  />
+<line x1='800' y1='940' x2='800' y2='400' stroke='#56616E' stroke-width='3'  />
+<line x1='800' y1='400' x2='736' y2='400' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='800' y1='665' x2='736' y2='665' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='800' y1='940' x2='736' y2='940' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='1300' y1='940' x2='1705' y2='940' stroke='#56616E' stroke-width='3'  />
+<line x1='1705' y1='940' x2='1705' y2='390' stroke='#56616E' stroke-width='3'  />
+<line x1='1705' y1='390' x2='1820' y2='390' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<text x='1440' y='922' font-family='Arial, sans-serif' font-size='21' font-weight='400' fill='#657080' text-anchor='start'>
+<tspan x='1440' dy='0'>pg · TCP/SSL</tspan>
+</text>
+<line x1='1840' y1='355' x2='1840' y2='416' stroke='#D52178' stroke-width='3'  />
+<line x1='1940' y1='355' x2='1940' y2='416' stroke='#D52178' stroke-width='3'  />
+<ellipse cx='1890' cy='355' rx='50' ry='15' fill='none' stroke='#D52178' stroke-width='4'/>
+<ellipse cx='1890' cy='415' rx='50' ry='15' fill='none' stroke='#D52178' stroke-width='4'/>
+<line x1='1855' y1='386' x2='1925' y2='386' stroke='#D52178' stroke-width='3'  />
+<text x='1890' y='473' font-family='Arial, sans-serif' font-size='26' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1890' dy='0'>Supabase</tspan>
+</text>
+<text x='1894.5' y='510' font-family='Arial, sans-serif' font-size='20' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='1894.5' dy='0'>Pooler + PostgreSQL</tspan>
+</text>
+<text x='2050' y='335' font-family='Arial, sans-serif' font-size='30' font-weight='700' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>Base de datos</tspan>
+</text>
+<text x='2050' y='384' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>• 23 tablas relacionales</tspan>
+<tspan x='2050' dy='27.6'>• Usuarios y Roles</tspan>
+<tspan x='2050' dy='27.6'>• Vehículos y catálogos</tspan>
+<tspan x='2050' dy='27.6'>• Citas y cotizaciones</tspan>
+<tspan x='2050' dy='27.6'>• Mantenimiento y servicios</tspan>
+<tspan x='2050' dy='27.6'>• Productos, compras y ventas</tspan>
+<tspan x='2050' dy='27.6'>• Claves foráneas e índices</tspan>
+</text>
+<ellipse cx='1890' cy='664' rx='25' ry='29' fill='none' stroke='#B531A3' stroke-width='4'/>
+<ellipse cx='1890' cy='661' rx='9' ry='9' fill='none' stroke='#B531A3' stroke-width='4'/>
+<line x1='1868' y1='681' x2='1890' y2='722' stroke='#B531A3' stroke-width='3'  />
+<line x1='1912' y1='681' x2='1890' y2='722' stroke='#B531A3' stroke-width='3'  />
+<text x='1895' y='758' font-family='Arial, sans-serif' font-size='23' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1895' dy='0'>Servicios externos</tspan>
+</text>
+<text x='2050' y='664' font-family='Arial, sans-serif' font-size='29' font-weight='700' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>Integraciones auxiliares</tspan>
+</text>
+<text x='2050' y='712' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>Google Maps: iframe de ubicación.</tspan>
+<tspan x='2050' dy='27.6'>NHTSA vPIC: carga inicial</tspan>
+<tspan x='2050' dy='27.6'>de marcas y modelos (scripts).</tspan>
+<tspan x='2050' dy='27.6'>Comunicación mediante HTTPS.</tspan>
+</text>
+<line x1='1290' y1='550' x2='1560' y2='550' stroke='#56616E' stroke-width='3'  stroke-dasharray="9 6"/>
+<line x1='1560' y1='550' x2='1560' y2='680' stroke='#56616E' stroke-width='3'  stroke-dasharray="9 6"/>
+<line x1='1560' y1='680' x2='1820' y2='680' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" stroke-dasharray="9 6"/>
+<rect x='1840' y='890' width='100' height='90' fill='#FFFFFF' stroke='#D52178' stroke-width='2' />
+<line x1='1845' y1='938' x2='1866' y2='938' stroke='#D52178' stroke-width='3'  />
+<line x1='1866' y1='938' x2='1879' y2='913' stroke='#D52178' stroke-width='3'  />
+<line x1='1879' y1='913' x2='1895' y2='961' stroke='#D52178' stroke-width='3'  />
+<line x1='1895' y1='961' x2='1909' y2='933' stroke='#D52178' stroke-width='3'  />
+<line x1='1909' y1='933' x2='1935' y2='933' stroke='#D52178' stroke-width='3'  />
+<text x='1895' y='1016' font-family='Arial, sans-serif' font-size='24' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1895' dy='0'>Health Check</tspan>
+</text>
+<text x='2050' y='900' font-family='Arial, sans-serif' font-size='30' font-weight='700' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>Monitoreo y CI/CD</tspan>
+</text>
+<text x='2050' y='952' font-family='Arial, sans-serif' font-size='24' font-weight='400' fill='#242B36' text-anchor='start'>
+<tspan x='2050' dy='0'>• Git y validaciones del pipeline</tspan>
+<tspan x='2050' dy='27.6'>• npm ci · build · Vitest</tspan>
+<tspan x='2050' dy='27.6'>• Vercel CLI: pull / build / deploy</tspan>
+<tspan x='2050' dy='27.6'>• GET /api/health: API y base</tspan>
+</text>
+<line x1='1705' y1='940' x2='1820' y2='940' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<text x='65' y='1148' font-family='Arial, sans-serif' font-size='23' font-weight='700' fill='#242B36' text-anchor='start'>
+<tspan x='65' dy='0'>PIPELINE DE DESPLIEGUE</tspan>
+</text>
+<rect x='65' y='1180' width='470' height='90' fill='#F5F5F8' stroke='#D1D4DB' stroke-width='2' />
+<text x='300' y='1215' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='300' dy='0'>Repositorio Git</tspan>
+</text>
+<text x='300' y='1252' font-family='Arial, sans-serif' font-size='22' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='300' dy='0'>Ramas y merge requests hacia main</tspan>
+</text>
+<rect x='585' y='1180' width='550' height='90' fill='#F5F5F8' stroke='#D1D4DB' stroke-width='2' />
+<text x='860' y='1215' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='860' dy='0'>Validación</tspan>
+</text>
+<text x='860' y='1252' font-family='Arial, sans-serif' font-size='22' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='860' dy='0'>npm ci · build · pruebas Vitest</tspan>
+</text>
+<rect x='1185' y='1180' width='645' height='90' fill='#F5F5F8' stroke='#D1D4DB' stroke-width='2' />
+<text x='1507.5' y='1215' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='1507.5' dy='0'>Vercel CLI</tspan>
+</text>
+<text x='1507.5' y='1252' font-family='Arial, sans-serif' font-size='22' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='1507.5' dy='0'>pull → build → deploy</tspan>
+</text>
+<rect x='1880' y='1180' width='655' height='90' fill='#F5F5F8' stroke='#D1D4DB' stroke-width='2' />
+<text x='2207.5' y='1215' font-family='Arial, sans-serif' font-size='25' font-weight='700' fill='#242B36' text-anchor='middle'>
+<tspan x='2207.5' dy='0'>Producción + Health Check</tspan>
+</text>
+<text x='2207.5' y='1252' font-family='Arial, sans-serif' font-size='22' font-weight='400' fill='#657080' text-anchor='middle'>
+<tspan x='2207.5' dy='0'>CDN / función serverless → GET /api/health</tspan>
+</text>
+<line x1='539' y1='1225' x2='580' y2='1225' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='1139' y1='1225' x2='1180' y2='1225' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<line x1='1834' y1='1225' x2='1875' y2='1225' stroke='#56616E' stroke-width='3' marker-end="url(#arrow)" />
+<text x='65' y='1332' font-family='Arial, sans-serif' font-size='22' font-weight='400' fill='#657080' text-anchor='start'>
+<tspan x='65' dy='0'>Línea continua: comunicación principal     |     Línea discontinua: integración auxiliar     |     Las respuestas vuelven al origen.</tspan>
+</text>
+<text x='65' y='1371' font-family='Arial, sans-serif' font-size='21' font-weight='400' fill='#657080' text-anchor='start'>
+<tspan x='65' dy='0'>Panel disponible para Administrador; Técnico existe en el modelo. Google Maps y NHTSA vPIC no son dependencias de la operación principal.</tspan>
+</text>
+</svg>

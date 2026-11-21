@@ -50,7 +50,53 @@ pruebas:
       junit: taller-frontend/test-results/junit.xml
     paths:
       - taller-frontend/test-results/junit.xml
+      - taller-frontend/coverage/
     expire_in: 7 days
+
+pruebas_backend:
+  stage: test
+  script:
+    - npm --prefix backend ci --cache .npm --prefer-offline
+    - npm --prefix backend run test:ci
+  cache:
+    key:
+      files:
+        - backend/package-lock.json
+    paths:
+      - .npm/
+  artifacts:
+    when: always
+    reports:
+      junit: backend/test-results/junit.xml
+    paths:
+      - backend/test-results/junit.xml
+    expire_in: 7 days
+
+migraciones:
+  stage: test
+  image: node:22
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: sanjorge_test
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    DATABASE_URL: postgres://postgres:postgres@postgres:5432/sanjorge_test
+    DB_SSL: "false"
+  script:
+    - npm --prefix backend ci --cache .npm --prefer-offline
+    - npm --prefix backend run wait:db
+    - npm --prefix backend run migrate:all
+    - npm --prefix backend run migrate:all
+    - npm --prefix backend run validate:schema
+    - npm --prefix backend run smoke:test
+  cache:
+    key:
+      files:
+        - backend/package-lock.json
+    paths:
+      - .npm/
 
 .docker_job:
   image: docker:27.4.1-cli
@@ -71,6 +117,10 @@ validar_imagenes:
   needs:
     - job: pruebas
       artifacts: false
+    - job: pruebas_backend
+      artifacts: false
+    - job: migraciones
+      artifacts: false
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
@@ -82,6 +132,10 @@ publicar_imagenes:
   stage: package
   needs:
     - job: pruebas
+      artifacts: false
+    - job: pruebas_backend
+      artifacts: false
+    - job: migraciones
       artifacts: false
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web")'
@@ -122,9 +176,43 @@ deploy_staging:
     - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
     - cd "$DEPLOY_DIR"
     - docker compose pull
+    - docker compose run --rm --no-deps backend npm run wait:db
+    - docker compose run --rm --no-deps backend npm run migrate:all
+    - docker compose run --rm --no-deps backend npm run validate:schema
+    - docker compose run --rm --no-deps backend npm run smoke:test
     - docker compose up -d --no-build --remove-orphans --wait --wait-timeout 120
     - docker compose ps
     - curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/healthz"
     - curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/api/health"
+    - curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/api/catalogo/marcas"
+    - curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/api/mantenimientos"
   after_script:
     - docker logout "$CI_REGISTRY"
+
+deploy_production:
+  stage: deploy
+  needs:
+    - job: pruebas
+      artifacts: false
+    - job: pruebas_backend
+      artifacts: false
+    - job: migraciones
+      artifacts: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web")'
+  resource_group: production
+  environment:
+    name: production
+    url: https://autoservsanjorge.vercel.app
+  script:
+    - |
+      for variable in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+        if [ -z "${!variable}" ]; then
+          echo "Falta $variable. Revisa las variables CI/CD y la protección de main."
+          exit 1
+        fi
+      done
+    - npm install --global vercel@latest
+    - vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+    - vercel build --prod --token="$VERCEL_TOKEN"
+    - vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" -m gitlabDeployment="1" -m gitlabCommitRef="$CI_COMMIT_BRANCH" -m gitlabCommitSha="$CI_COMMIT_SHA"

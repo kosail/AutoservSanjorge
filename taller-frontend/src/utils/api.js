@@ -1,4 +1,42 @@
+import { nombreArchivoConFecha, parseFilenameFromDisposition } from './descargas.js';
+
 const BASE_URL = import.meta.env.VITE_API_URL || '';
+
+function getToken() {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  } catch {
+    return null;
+  }
+}
+
+async function downloadRequest(path, fallbackFilename) {
+  const token = getToken();
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await response.json().catch(() => ({}));
+      const error = new Error(data.error || `Error ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+    const error = new Error(response.statusText || `Error ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  const blob = await response.blob();
+  const filename = parseFilenameFromDisposition(
+    response.headers.get('content-disposition'),
+    fallbackFilename
+  );
+
+  return { blob, filename };
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -17,6 +55,24 @@ async function request(path, options = {}) {
   }
 
   return body;
+}
+
+async function descargarArchivo(path, nombre) {
+  const response = await fetch(`${BASE_URL}${path}`);
+  const tipo = nombre.endsWith('.pdf')
+    ? 'application/pdf'
+    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (!response.ok || response.headers.get('content-type')?.split(';')[0] !== tipo) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || 'No se pudo descargar el archivo.');
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ─── Citas ───────────────────────────────────────────────────────────────────
@@ -156,8 +212,29 @@ export const fetchMantenimientos = () => request('/api/mantenimientos');
 export const createMantenimiento = (data) => request('/api/mantenimientos', { method: 'POST', body: JSON.stringify(data) });
 export const updateMantenimiento = (id, data) => request(`/api/mantenimientos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const updateMantenimientoEstado = (id, estado) => request(`/api/mantenimientos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) });
+export const descargarOrdenMantenimiento = (id) => descargarArchivo(
+  `/api/mantenimientos/${id}/orden.pdf`, `orden-mantenimiento-${id}.pdf`
+);
+export const exportarMantenimiento = (id, formato) => downloadRequest(
+  `/api/mantenimientos/${id}/export?formato=${encodeURIComponent(formato)}`,
+  nombreArchivoConFecha(`mantenimiento-${id}`, formato)
+);
+export const exportarMantenimientos = (formato, estado) => {
+  const params = new URLSearchParams({ formato });
+  if (estado) params.set('estado', estado);
+  return downloadRequest(
+    `/api/mantenimientos/export?${params.toString()}`,
+    nombreArchivoConFecha('mantenimientos', formato)
+  );
+};
 
 // --- Reportes ---
 export const fetchReporteVentas = () => request('/api/reportes/ventas');
+export const fetchResumenVentasDiarias = (fecha, signal) => request(
+  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha })}`, { signal }
+);
+export const descargarVentasDiarias = (fecha, formato) => descargarArchivo(
+  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha, formato })}`, `ventas-diarias-${fecha}.${formato}`
+);
 export const fetchReporteProductos = () => request('/api/reportes/productos');
 export const fetchReporteServicios = () => request('/api/reportes/servicios');

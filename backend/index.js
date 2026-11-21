@@ -22,9 +22,11 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const bcrypt = require('bcryptjs');
 const pool = require('./db');
+const { asegurarMarcasUnicas } = require('./migrations/marcasUnicas');
 
 const marcaRoutes = require('./routes/marcaRoutes');
 const vehiculoRoutes = require('./routes/vehiculoRoutes');
@@ -46,6 +48,15 @@ const usersRoutes = require('./routes/usersRoutes');
 const rolesRoutes = require('./routes/rolesRoutes');
 
 const app = express();
+
+// ---------------------------------------------------------------------------
+// Cabeceras de Seguridad (Helmet & Ocultar cabeceras identificadoras)
+// ---------------------------------------------------------------------------
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+app.disable('x-powered-by');
+
 app.use(cors());
 app.use(express.json());
 
@@ -166,9 +177,12 @@ const initializeDatabase = async () => {
       email VARCHAR(100) UNIQUE,
       contrasena VARCHAR(255),
       nombre VARCHAR(100),
+      apellido VARCHAR(100),
       telefono VARCHAR(20)
     );
   `);
+
+  await pool.query(`ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS apellido VARCHAR(100)`).catch(() => {});
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS Marca (
@@ -398,6 +412,8 @@ const initializeDatabase = async () => {
     ON Productos_compatibilidad(idMarcas)
   `).catch(() => {});
 
+  await asegurarMarcasUnicas(pool);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS Factura (
       idFactura SERIAL PRIMARY KEY,
@@ -535,6 +551,7 @@ const formatUserRow = (row) => ({
   roleId: row.idroles,
   email: row.email,
   name: row.nombre,
+  lastname: row.apellido || '',
   phone: row.telefono || '',
   role: row.rolename,
 });
@@ -594,6 +611,32 @@ app.use('/api/users', usersRoutes);
 app.use('/users', usersRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/roles', rolesRoutes);
+
+// ---------------------------------------------------------------------------
+// Manejo controlado de rutas no encontradas (404)
+// ---------------------------------------------------------------------------
+app.use((req, res) => {
+  res.status(404).json({
+    status: 404,
+    error: 'Recurso no encontrado',
+    message: `La ruta solicitada '${req.originalUrl}' no existe en este servidor.`
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Manejo controlado de errores globales (500)
+// ---------------------------------------------------------------------------
+app.use((err, req, res, next) => {
+  console.error('[Error controlado en servidor]:', err);
+  const status = err.statusCode || err.status || 500;
+  res.status(status).json({
+    status,
+    error: err.name || 'Error del servidor',
+    message: process.env.NODE_ENV === 'production'
+      ? 'Ocurrió un error interno controlado en el servidor.'
+      : (err.message || 'Error interno del servidor')
+  });
+});
 
 const PORT = process.env.PORT || 4000;
 
