@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
+import {
+  buscarMarcaDuplicada,
+  mensajeErrorMarca,
+  MENSAJE_MARCA_DUPLICADA,
+} from '../utils/marcas';
 
 const API = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || '';
 
@@ -10,7 +15,9 @@ async function apiFetch(path, opts = {}) {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Error ${res.status}`);
+    const error = new Error(data.error || `Error ${res.status}`);
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }
@@ -114,6 +121,7 @@ export default function AdminVehiculos() {
   const [modal, setModal] = useState(null); // { type: 'marca'|'modelo'|'motor'|'anio', item: null|{} }
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   // ── Carga de datos ──────────────────────────────────────────────────────────
   const loadAll = async () => {
@@ -148,29 +156,52 @@ export default function AdminVehiculos() {
   // ── Abrir modal ─────────────────────────────────────────────────────────────
   const openModal = (type, item = null) => {
     setForm(item ? { ...item } : {});
+    setFormError('');
     setModal({ type, item });
   };
 
-  const closeModal = () => { setModal(null); setForm({}); };
+  const closeModal = () => { setModal(null); setForm({}); setFormError(''); };
 
   // ── Guardar (create / update) ───────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     const { type, item } = modal;
     const isEditing = !!item?.id;
+
+    if (type === 'marca') {
+      const nombre = String(form.nombre ?? '').trim();
+      if (!nombre) {
+        setFormError('El nombre es requerido');
+        return;
+      }
+      if (buscarMarcaDuplicada(marcas, nombre, item?.id)) {
+        setFormError(MENSAJE_MARCA_DUPLICADA);
+        return;
+      }
+    }
+
+    setFormError('');
+    setSaving(true);
     try {
       const pathMap = { marca: 'marcas', modelo: 'modelos', motor: 'motores', anio: 'anios' };
       const path = `/api/catalogo/${pathMap[type]}`;
+      const payload = type === 'marca'
+        ? { ...form, nombre: String(form.nombre ?? '').trim() }
+        : form;
+
       if (isEditing) {
-        await apiFetch(`${path}/${item.id}`, { method: 'PUT', body: JSON.stringify(form) });
+        await apiFetch(`${path}/${item.id}`, { method: 'PUT', body: JSON.stringify(payload) });
       } else {
-        await apiFetch(path, { method: 'POST', body: JSON.stringify(form) });
+        await apiFetch(path, { method: 'POST', body: JSON.stringify(payload) });
       }
       await loadAll();
       closeModal();
     } catch (err) {
-      alert(err.message);
+      if (type === 'marca') {
+        setFormError(mensajeErrorMarca(err));
+      } else {
+        alert(err.message);
+      }
     } finally {
       setSaving(false);
     }
@@ -343,12 +374,17 @@ export default function AdminVehiculos() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nombre de la marca <span className="text-red-500">*</span></label>
             <input
-              type="text" required autoFocus
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              type="text" required autoFocus maxLength={45}
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none ${formError ? 'border-red-400' : 'border-gray-300'}`}
               placeholder="Ej: Toyota, Ford, Honda..."
               value={form.nombre || ''}
-              onChange={e => setForm({ ...form, nombre: e.target.value })}
+              aria-invalid={Boolean(formError)}
+              onChange={e => {
+                setForm({ ...form, nombre: e.target.value });
+                if (formError) setFormError('');
+              }}
             />
+            {formError && <p role="alert" className="mt-1.5 text-sm text-red-600">{formError}</p>}
           </div>
         </SimpleModal>
       )}

@@ -52,6 +52,18 @@ pruebas:
       - taller-frontend/test-results/junit.xml
     expire_in: 7 days
 
+pruebas_backend:
+  stage: test
+  script:
+    - npm --prefix backend ci --cache .npm --prefer-offline
+    - npm --prefix backend test
+  cache:
+    key:
+      files:
+        - backend/package-lock.json
+    paths:
+      - .npm/
+
 .docker_job:
   image: docker:27.4.1-cli
   services:
@@ -71,6 +83,8 @@ validar_imagenes:
   needs:
     - job: pruebas
       artifacts: false
+    - job: pruebas_backend
+      artifacts: false
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
@@ -82,6 +96,8 @@ publicar_imagenes:
   stage: package
   needs:
     - job: pruebas
+      artifacts: false
+    - job: pruebas_backend
       artifacts: false
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web")'
