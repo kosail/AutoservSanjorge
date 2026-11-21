@@ -57,23 +57,14 @@ Hemos incluido un script automático para probar la conexión a Supabase y verif
 Abre una terminal en la carpeta `backend` y ejecuta:
 
 ```bash
-npm run migrate:supabase
+npm run migrate:all
+npm run validate:schema
+npm run smoke:test
 ```
 
-Salida esperada:
-```text
-🚀 Iniciando migración de base de datos hacia Supabase...
-✅ Conexión exitosa a Supabase (BD: postgres, Hora servidor: ...)
-📜 Ejecutando script de esquema de tablas y datos iniciales...
-✅ Esquema y tablas creados exitosamente en Supabase.
-📋 Tablas verificadas en el esquema public (23 tablas)
-👥 Roles registrados:
-   - ID 1: Administrador
-   - ID 2: Técnico
-   - ID 3: Cliente
-👑 Usuario Administrador inicial verificado (admin@admin.com)
-🎉 ¡Migración a Supabase completada con éxito!
-```
+`migrate:all` aplica el esquema base idempotente y las migraciones pendientes. `validate:schema` detiene el proceso si falta una tabla, columna o índice. `smoke:test` comprueba la conexión y consultas básicas.
+
+El orden completo y el detalle de las migraciones están en [backend/MIGRATIONS.md](backend/MIGRATIONS.md). `migrate:supabase` se conserva como alias del nuevo runner.
 
 ---
 

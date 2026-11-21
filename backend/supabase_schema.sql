@@ -276,8 +276,8 @@ VALUES
   ('Cliente', 'Acceso al portal de clientes', '["Cotizaciones","Reportes"]')
 ON CONFLICT DO NOTHING;
 
--- Insertar o actualizar usuario Administrador por defecto (Email: admin@admin.com / Contraseña: admin123)
-DELETE FROM Usuarios WHERE email = 'admin@admin.com';
+-- Insertar usuario Administrador por defecto si no existe (Email: admin@admin.com / Contraseña: admin123)
 INSERT INTO Usuarios (idRoles, email, contrasena, nombre, telefono)
 SELECT idRoles, 'admin@admin.com', '$2a$10$5xXZeYGdGAboPDX9LleGnPs.HRO9rRaJhTD3G9zwP2P', 'Administrador', ''
-FROM Roles WHERE nombre = 'Administrador';
+FROM Roles WHERE nombre = 'Administrador'
+ON CONFLICT DO NOTHING;
