@@ -19,6 +19,24 @@ async function request(path, options = {}) {
   return body;
 }
 
+async function descargarArchivo(path, nombre) {
+  const response = await fetch(`${BASE_URL}${path}`);
+  const tipo = nombre.endsWith('.pdf')
+    ? 'application/pdf'
+    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (!response.ok || response.headers.get('content-type')?.split(';')[0] !== tipo) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || 'No se pudo descargar el archivo.');
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // ─── Citas ───────────────────────────────────────────────────────────────────
 export const fetchCitas = () => request('/api/citas');
 export const createCita = (data) => request('/api/citas', {
@@ -156,8 +174,17 @@ export const fetchMantenimientos = () => request('/api/mantenimientos');
 export const createMantenimiento = (data) => request('/api/mantenimientos', { method: 'POST', body: JSON.stringify(data) });
 export const updateMantenimiento = (id, data) => request(`/api/mantenimientos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const updateMantenimientoEstado = (id, estado) => request(`/api/mantenimientos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) });
+export const descargarOrdenMantenimiento = (id) => descargarArchivo(
+  `/api/mantenimientos/${id}/orden.pdf`, `orden-mantenimiento-${id}.pdf`
+);
 
 // --- Reportes ---
 export const fetchReporteVentas = () => request('/api/reportes/ventas');
+export const fetchResumenVentasDiarias = (fecha, signal) => request(
+  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha })}`, { signal }
+);
+export const descargarVentasDiarias = (fecha, formato) => descargarArchivo(
+  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha, formato })}`, `ventas-diarias-${fecha}.${formato}`
+);
 export const fetchReporteProductos = () => request('/api/reportes/productos');
 export const fetchReporteServicios = () => request('/api/reportes/servicios');

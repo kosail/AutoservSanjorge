@@ -1,0 +1,1431 @@
+From 3b63735910e7c2d00bf289e40fd7ed4a6d4de945 Mon Sep 17 00:00:00 2001
+From: ingridpadillaa <ingridpagtz13@gmail.com>
+Date: Thu, 19 Nov 2026 14:41:27 -0600
+Subject: [PATCH] Implementar refacciones obligatorias y descargas del sprint 3
+
+---
+ backend/assets/logo-san-jorge.jpg             | Bin 0 -> 17114 bytes
+ .../controllers/mantenimientoController.js    | 256 +++++++++++-------
+ backend/exportaciones/excel.js                | 110 ++++++++
+ backend/exportaciones/pdf.js                  |  96 +++++++
+ backend/mantenimientoRefacciones.js           |  25 ++
+ backend/routes/mantenimientoRoutes.js         |   3 +-
+ backend/routes/reportes.js                    | 103 +++++--
+ backend/supabase_schema.sql                   |   4 +
+ .../src/pages/AdminMantenimiento.jsx          |  47 +++-
+ taller-frontend/src/pages/RemisionTecnico.jsx |   6 +-
+ taller-frontend/src/pages/Reportes.jsx        |  78 +++++-
+ taller-frontend/src/utils/api.js              |  27 ++
+ 12 files changed, 615 insertions(+), 140 deletions(-)
+ create mode 100644 backend/assets/logo-san-jorge.jpg
+ create mode 100644 backend/exportaciones/excel.js
+ create mode 100644 backend/exportaciones/pdf.js
+ create mode 100644 backend/mantenimientoRefacciones.js
+
+diff --git a/backend/assets/logo-san-jorge.jpg b/backend/assets/logo-san-jorge.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..63a8f78fb471dd18fd8ba027c7164667752a1e12
+GIT binary patch
+literal 17114
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/backend/controllers/mantenimientoController.js b/backend/controllers/mantenimientoController.js
+index 76456b9..f45a1e4 100644
+--- a/backend/controllers/mantenimientoController.js
++++ b/backend/controllers/mantenimientoController.js
+@@ -1,19 +1,41 @@
+ const pool = require('../db');
++const { esRefaccionValida, mensajeRefacciones, refaccionesEspecialesDeOrden } = require('../mantenimientoRefacciones');
++const { generarPDF } = require('../exportaciones/pdf');
+ 
+-// Asegurar que la tabla Mantenimiento tenga la columna checklist
+-const ensureChecklistColumn = async () => {
+-  try {
+-    await pool.query(`
+-      ALTER TABLE Mantenimiento ADD COLUMN IF NOT EXISTS checklist TEXT;
+-    `);
+-  } catch (err) {
+-    console.error('Error verificando columna checklist:', err.message);
++let mantenimientoColumns;
++function ensureMantenimientoColumns() {
++  if (!mantenimientoColumns) {
++    mantenimientoColumns = pool.query('SELECT checklist, refacciones_especiales FROM Mantenimiento LIMIT 0')
++      .catch(err => {
++        if (err.code !== '42703') throw err;
++        return pool.query(`
++          ALTER TABLE Mantenimiento
++            ADD COLUMN IF NOT EXISTS checklist TEXT,
++            ADD COLUMN IF NOT EXISTS refacciones_especiales JSONB
++        `);
++      }).catch(err => {
++        mantenimientoColumns = undefined;
++        throw err;
++      });
+   }
+-};
+-ensureChecklistColumn();
++  return mantenimientoColumns;
++}
+ 
+-const getMantenimientos = async (req, res) => {
+-  try {
++function refaccionesEspeciales(productos) {
++  return productos.filter(p => String(p.id).startsWith('custom_prod_')).map(p => ({
++    id: p.id,
++    nombre: p.nombre.trim(),
++    cantidad: Number(p.cantidad),
++    precio: Number(p.precio) || 0,
++  }));
++}
++
++function productosValidos(productos) {
++  return Array.isArray(productos) && productos.length > 0 && productos.every(esRefaccionValida);
++}
++
++async function consultarMantenimientos(id = null) {
++    await ensureMantenimientoColumns();
+     const result = await pool.query(`
+       SELECT 
+         m.idMantenimiento as id,
+@@ -21,9 +43,11 @@ const getMantenimientos = async (req, res) => {
+         m.kilometraje,
+         m.estado,
+         m.fecha,
++        TO_CHAR(m.fecha, 'YYYY-MM-DD') AS fecha_orden,
+         m.observaciones,
+         m.costo_final,
+         m.checklist,
++        m.refacciones_especiales,
+         v.idVehiculos as vehiculo_id,
+         v.placa as vehiculo_placa,
+         mo.nombre as vehiculo_modelo,
+@@ -35,10 +59,11 @@ const getMantenimientos = async (req, res) => {
+       LEFT JOIN Usuarios u ON v.idUsuarios = u.idUsuarios
+       LEFT JOIN Modelos mo ON v.idModelos = mo.idModelos
+       LEFT JOIN Marca ma ON v.idMarcas = ma.idMarcas
++      WHERE ($1::int IS NULL OR m.idMantenimiento = $1)
+       ORDER BY m.fecha DESC, m.idMantenimiento DESC
+-    `);
++    `, [id]);
+     
+-    const mantenimientos = await Promise.all(result.rows.map(async (m) => {
++    return Promise.all(result.rows.map(async (m) => {
+       // Fetch servicios
+       const servRes = await pool.query(`
+         SELECT d.idServicios as id, s.nombre, d.precio, d.descripcion
+@@ -64,33 +89,81 @@ const getMantenimientos = async (req, res) => {
+         }
+       }
+ 
++      const { refacciones_especiales, fecha_orden, ...orden } = m;
+       return {
+-        ...m,
+-        vehiculo: `${m.vehiculo_marca || ''} ${m.vehiculo_modelo || ''} • ${m.vehiculo_placa || ''}`,
++        ...orden,
++        ...(id && { fecha_orden }),
++        vehiculo: [m.vehiculo_marca, m.vehiculo_modelo, m.vehiculo_placa].filter(Boolean).join(' '),
+         servicios: servRes.rows,
+-        productos: prodRes.rows,
++        productos: [...prodRes.rows, ...refaccionesEspecialesDeOrden({ ...orden, refacciones_especiales })],
+         checklist: parsedChecklist
+       };
+     }));
+-    
+-    res.json(mantenimientos);
++}
++
++const getMantenimientos = async (req, res) => {
++  try {
++    res.json(await consultarMantenimientos());
+   } catch (err) {
+     res.status(500).json({ error: err.message });
+   }
+ };
+ 
++const descargarOrdenMantenimiento = async (req, res) => {
++  const id = Number(req.params.id);
++  if (!Number.isInteger(id) || id < 1 || id > 2147483647) {
++    return res.status(400).json({ error: 'Identificador de mantenimiento inválido' });
++  }
++
++  try {
++    const [orden] = await consultarMantenimientos(id);
++    if (!orden) return res.status(404).json({ error: 'Mantenimiento no encontrado' });
++    if (orden.estado !== 'Completado') {
++      return res.status(409).json({ error: 'La descarga está disponible cuando el mantenimiento está completado' });
++    }
++    const dinero = (cantidad) => `$${Number(cantidad || 0).toFixed(2)} MXN`;
++    const pdf = generarPDF('Orden de mantenimiento', `Orden #${id}  |  ${orden.fecha_orden || 'Sin fecha'}  |  ${orden.estado}`, [
++      `Cliente: ${orden.cliente_nombre || 'Sin registrar'}`,
++      `Vehículo: ${orden.vehiculo || 'Sin registrar'}`,
++      `Técnico: ${orden.tecnico || 'Sin asignar'}`,
++      `Kilometraje: ${orden.kilometraje || 'Sin registrar'}`,
++      '',
++      'SERVICIOS',
++      ...orden.servicios.map(s => `- ${s.nombre}: ${dinero(s.precio)}${s.descripcion ? ` / ${s.descripcion}` : ''}`),
++      '',
++      'REFACCIONES',
++      ...orden.productos.map(p => `- ${p.nombre} x${p.cantidad}: ${dinero(p.precio)} por unidad`),
++      '',
++      'LISTA DE VERIFICACIÓN',
++      ...(Array.isArray(orden.checklist) ? orden.checklist : []).map(c => `- ${c.item}: ${c.estado}${c.nota ? ` / ${c.nota}` : ''}`),
++      '',
++      `Observaciones: ${orden.observaciones || 'Sin observaciones'}`,
++      `Total: ${dinero(orden.costo_final)}`,
++    ]);
++    res.set('Cache-Control', 'private, no-store').attachment(`orden-mantenimiento-${id}.pdf`).send(pdf);
++  } catch (err) {
++    console.error(err);
++    res.status(500).json({ error: 'Error al generar la orden de mantenimiento' });
++  }
++};
++
+ const createMantenimiento = async (req, res) => {
+-  const client = await pool.connect();
++  const { idVehiculos, tecnico, kilometraje, estado, fecha, observaciones, costo_final, servicios, productos, checklist } = req.body;
++  if (!productosValidos(productos)) return res.status(400).json({ error: mensajeRefacciones });
++
++  let client;
+   try {
++    await ensureMantenimientoColumns();
++    client = await pool.connect();
+     await client.query('BEGIN');
+     
+-    const { idVehiculos, tecnico, kilometraje, estado, fecha, observaciones, costo_final, servicios, productos, checklist } = req.body;
+     const checklistJson = checklist ? JSON.stringify(checklist) : null;
+     
+     const mantRes = await client.query(`
+-      INSERT INTO Mantenimiento (idVehiculos, tecnico, kilometraje, estado, fecha, observaciones, costo_final, checklist)
+-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING idMantenimiento
+-    `, [idVehiculos, tecnico, kilometraje, estado || 'En proceso', fecha, observaciones || '', costo_final || 0, checklistJson]);
++      INSERT INTO Mantenimiento (idVehiculos, tecnico, kilometraje, estado, fecha, observaciones, costo_final, checklist, refacciones_especiales)
++      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING idMantenimiento
++    `, [idVehiculos, tecnico, kilometraje, estado || 'En proceso', fecha, observaciones || '', costo_final || 0, checklistJson,
++      JSON.stringify(refaccionesEspeciales(productos))]);
+     
+     const idMantenimiento = mantRes.rows[0].idmantenimiento;
+     
+@@ -110,24 +183,7 @@ const createMantenimiento = async (req, res) => {
+       }
+     }
+     
+-    if (productos && Array.isArray(productos)) {
+-      for (const p of productos) {
+-        const pIdNum = parseInt(p.id, 10);
+-        if (!isNaN(pIdNum) && pIdNum > 0) {
+-          await client.query(`
+-            INSERT INTO DetalleMantenimientoProductos (idMantenimiento, idProductos, cantidad, precio)
+-            VALUES ($1, $2, $3, $4)
+-          `, [idMantenimiento, pIdNum, p.cantidad || 1, p.precio || 0]);
+-          
+-          // Descontar inventario
+-          await client.query(`
+-            UPDATE Productos SET stock_actual = stock_actual - $1 WHERE idProductos = $2
+-          `, [p.cantidad || 1, pIdNum]);
+-        } else if (p.nombre) {
+-          extraObservaciones.push(`[Refacción Especial: ${p.nombre} x${p.cantidad || 1} ($${p.precio || 0} c/u)]`);
+-        }
+-      }
+-    }
++    await insertarProductos(client, idMantenimiento, productos);
+ 
+     if (extraObservaciones.length > 0) {
+       const obsFinales = (observaciones || '') + ' ' + extraObservaciones.join(' ');
+@@ -139,33 +195,71 @@ const createMantenimiento = async (req, res) => {
+     await client.query('COMMIT');
+     res.status(201).json({ success: true, idMantenimiento });
+   } catch (err) {
+-    await client.query('ROLLBACK');
+-    res.status(500).json({ error: err.message });
++    await client?.query('ROLLBACK');
++    res.status(err.code === '23503' ? 400 : 500).json({ error: err.message });
+   } finally {
+-    client.release();
++    client?.release();
+   }
+ };
+ 
+-const updateMantenimientoFull = async (req, res) => {
+-  const client = await pool.connect();
++async function insertarProductos(client, id, productos) {
++  const catalogo = productos.filter(p => Number.isSafeInteger(Number(p.id)));
++  for (const p of catalogo) {
++    await client.query(`
++      INSERT INTO DetalleMantenimientoProductos (idMantenimiento, idProductos, cantidad, precio)
++      VALUES ($1, $2, $3, $4)
++    `, [id, Number(p.id), Number(p.cantidad), p.precio || 0]);
++    await client.query('UPDATE Productos SET stock_actual = stock_actual - $1 WHERE idProductos = $2',
++      [Number(p.cantidad), Number(p.id)]);
++  }
++}
++
++async function actualizarOrden(req, res, soloEstado) {
++  const { id } = req.params;
++  const { tecnico, kilometraje, estado, observaciones, costo_final, checklist, servicios, productos } =
++    soloEstado ? { estado: req.body.estado } : req.body;
++
++  if (productos !== undefined && !productosValidos(productos)) {
++    return res.status(400).json({ error: mensajeRefacciones });
++  }
++
++  let client;
+   try {
+-    const { id } = req.params;
+-    const { tecnico, kilometraje, estado, observaciones, costo_final, checklist, servicios, productos } = req.body;
+-    
++    await ensureMantenimientoColumns();
++    client = await pool.connect();
+     await client.query('BEGIN');
+-    
++
++    const { rows: [orden] } = await client.query(
++      'SELECT observaciones, refacciones_especiales FROM Mantenimiento WHERE idMantenimiento = $1 FOR UPDATE', [id]
++    );
++    if (!orden) {
++      await client.query('ROLLBACK');
++      return res.status(404).json({ error: 'Mantenimiento no encontrado' });
++    }
++
++    const { rows: anteriores } = await client.query(
++      'SELECT idProductos AS id, cantidad FROM DetalleMantenimientoProductos WHERE idMantenimiento = $1', [id]
++    );
++    const especiales = productos ? refaccionesEspeciales(productos) : refaccionesEspecialesDeOrden(orden);
++    if (!productos && ![...anteriores, ...especiales].some(esRefaccionValida)) {
++      await client.query('ROLLBACK');
++      return res.status(400).json({ error: mensajeRefacciones });
++    }
++
+     const checklistJson = checklist ? JSON.stringify(checklist) : null;
+ 
+-    await client.query(`
++    const { rows: [actualizada] } = await client.query(`
+       UPDATE Mantenimiento
+       SET tecnico = COALESCE($1, tecnico),
+           kilometraje = COALESCE($2, kilometraje),
+           estado = COALESCE($3, estado),
+           observaciones = COALESCE($4, observaciones),
+           costo_final = COALESCE($5, costo_final),
+-          checklist = COALESCE($6, checklist)
+-      WHERE idMantenimiento = $7
+-    `, [tecnico, kilometraje, estado, observaciones, costo_final, checklistJson, id]);
++          checklist = COALESCE($6, checklist),
++          refacciones_especiales = $7
++      WHERE idMantenimiento = $8
++      RETURNING *
++    `, [tecnico, kilometraje, estado, observaciones, costo_final, checklistJson, JSON.stringify(especiales), id]);
+ 
+     if (servicios && Array.isArray(servicios)) {
+       await client.query(`DELETE FROM DetalleMantenimientoServicios WHERE idMantenimiento = $1`, [id]);
+@@ -180,57 +274,31 @@ const updateMantenimientoFull = async (req, res) => {
+       }
+     }
+ 
+-    if (productos && Array.isArray(productos)) {
++    if (productos) {
+       // Revertir stock de productos anteriores
+-      const oldProds = await client.query(`SELECT idProductos, cantidad FROM DetalleMantenimientoProductos WHERE idMantenimiento = $1`, [id]);
+-      for (const oldP of oldProds.rows) {
+-        await client.query(`UPDATE Productos SET stock_actual = stock_actual + $1 WHERE idProductos = $2`, [oldP.cantidad, oldP.idproductos]);
++      for (const anterior of anteriores) {
++        await client.query('UPDATE Productos SET stock_actual = stock_actual + $1 WHERE idProductos = $2',
++          [anterior.cantidad, anterior.id]);
+       }
+ 
+       await client.query(`DELETE FROM DetalleMantenimientoProductos WHERE idMantenimiento = $1`, [id]);
+-      for (const p of productos) {
+-        const pIdNum = parseInt(p.id, 10);
+-        if (!isNaN(pIdNum) && pIdNum > 0) {
+-          await client.query(`
+-            INSERT INTO DetalleMantenimientoProductos (idMantenimiento, idProductos, cantidad, precio)
+-            VALUES ($1, $2, $3, $4)
+-          `, [id, pIdNum, p.cantidad || 1, p.precio || 0]);
+-
+-          await client.query(`
+-            UPDATE Productos SET stock_actual = stock_actual - $1 WHERE idProductos = $2
+-          `, [p.cantidad || 1, pIdNum]);
+-        }
+-      }
++      await insertarProductos(client, id, productos);
+     }
+ 
+     await client.query('COMMIT');
+-    res.json({ success: true });
++    res.json(soloEstado ? actualizada : { success: true });
+   } catch (err) {
+-    await client.query('ROLLBACK');
+-    res.status(500).json({ error: err.message });
++    await client?.query('ROLLBACK');
++    res.status(err.code === '23503' ? 400 : 500).json({ error: err.message });
+   } finally {
+-    client.release();
+-  }
+-};
+-
+-const updateMantenimientoEstado = async (req, res) => {
+-  try {
+-    const { id } = req.params;
+-    const { estado } = req.body;
+-    const result = await pool.query(
+-      'UPDATE Mantenimiento SET estado = $1 WHERE idMantenimiento = $2 RETURNING *',
+-      [estado, id]
+-    );
+-    if (result.rows.length === 0) return res.status(404).json({ error: 'Mantenimiento no encontrado' });
+-    res.json(result.rows[0]);
+-  } catch (err) {
+-    res.status(500).json({ error: err.message });
++    client?.release();
+   }
+-};
++}
+ 
+ module.exports = {
+   getMantenimientos,
++  descargarOrdenMantenimiento,
+   createMantenimiento,
+-  updateMantenimientoFull,
+-  updateMantenimientoEstado
++  updateMantenimientoFull: (req, res) => actualizarOrden(req, res, false),
++  updateMantenimientoEstado: (req, res) => actualizarOrden(req, res, true)
+ };
+diff --git a/backend/exportaciones/excel.js b/backend/exportaciones/excel.js
+new file mode 100644
+index 0000000..85980b5
+--- /dev/null
++++ b/backend/exportaciones/excel.js
+@@ -0,0 +1,110 @@
++const { readFileSync } = require('node:fs');
++const { join } = require('node:path');
++const { crc32, deflateRawSync } = require('node:zlib');
++
++const logo = readFileSync(join(__dirname, '../assets/logo-san-jorge.jpg'));
++const hoja = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
++const relacion = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
++const dibujo = 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing';
++const dibujoBase = 'http://schemas.openxmlformats.org/drawingml/2006/main';
++const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
++
++function escapar(texto) {
++  return String(texto ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
++    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
++}
++
++function relaciones(elementos) {
++  return `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
++    ${elementos.map(([tipo, destino]) =>
++      `<Relationship Id="rId1" Type="${relacion}/${tipo}" Target="${destino}"/>`).join('')}
++  </Relationships>`;
++}
++
++function crearZip(archivos) {
++  const entradas = [];
++  const directorio = [];
++  let offset = 0;
++
++  for (const [ruta, contenido] of Object.entries(archivos)) {
++    const nombre = Buffer.from(ruta);
++    const original = Buffer.isBuffer(contenido) ? contenido : Buffer.from(xml + contenido);
++    const comprimido = deflateRawSync(original);
++    const crc = crc32(original);
++    const local = Buffer.alloc(30);
++    local.writeUInt32LE(0x04034b50, 0);
++    local.writeUInt16LE(20, 4); // ZIP 2.0, necesario para deflate
++    local.writeUInt16LE(8, 8);
++    local.writeUInt16LE(33, 12); // Fecha mínima DOS, 1 de enero de 1980
++    local.writeUInt32LE(crc, 14);
++    local.writeUInt32LE(comprimido.length, 18);
++    local.writeUInt32LE(original.length, 22);
++    local.writeUInt16LE(nombre.length, 26);
++    const central = Buffer.alloc(46);
++    central.writeUInt32LE(0x02014b50, 0);
++    central.writeUInt16LE(20, 4);
++    local.copy(central, 6, 4, 30); // Versión, método, CRC, tamaños y nombre
++    central.writeUInt32LE(offset, 42);
++    entradas.push(local, nombre, comprimido);
++    directorio.push(central, nombre);
++    offset += local.length + nombre.length + comprimido.length;
++  }
++
++  const indice = Buffer.concat(directorio);
++  const fin = Buffer.alloc(22);
++  fin.writeUInt32LE(0x06054b50, 0);
++  fin.writeUInt16LE(directorio.length / 2, 8);
++  fin.writeUInt16LE(directorio.length / 2, 10);
++  fin.writeUInt32LE(indice.length, 12);
++  fin.writeUInt32LE(offset, 16);
++  return Buffer.concat([...entradas, indice, fin]);
++}
++
++function generarExcel(filas) {
++  const datos = filas.map((celdas, indice) => {
++    const n = indice + 6;
++    return `<row r="${n}">${celdas.map((valor, columna) => {
++      const celda = `${String.fromCharCode(65 + columna)}${n}`;
++      return typeof valor === 'number'
++        ? `<c r="${celda}"><v>${valor}</v></c>`
++        : `<c r="${celda}" t="inlineStr"><is><t xml:space="preserve">${escapar(valor)}</t></is></c>`;
++    }).join('')}</row>`;
++  }).join('');
++
++  return crearZip({
++    '[Content_Types].xml': `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
++      <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
++      <Default Extension="xml" ContentType="application/xml"/>
++      <Default Extension="jpg" ContentType="image/jpeg"/>
++      <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
++      <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
++      <Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
++    </Types>`,
++    '_rels/.rels': relaciones([['officeDocument', 'xl/workbook.xml']]),
++    'xl/workbook.xml': `<workbook xmlns="${hoja}" xmlns:r="${relacion}"><sheets>
++      <sheet name="Ventas diarias" sheetId="1" r:id="rId1"/>
++    </sheets></workbook>`,
++    'xl/_rels/workbook.xml.rels': relaciones([['worksheet', 'worksheets/sheet1.xml']]),
++    'xl/worksheets/sheet1.xml': `<worksheet xmlns="${hoja}" xmlns:r="${relacion}">
++      <cols><col min="1" max="1" width="26" customWidth="1"/><col min="2" max="2" width="30" customWidth="1"/>
++      <col min="3" max="3" width="54" customWidth="1"/><col min="4" max="6" width="19" customWidth="1"/></cols>
++      <sheetData>${datos}</sheetData><drawing r:id="rId1"/>
++    </worksheet>`,
++    'xl/worksheets/_rels/sheet1.xml.rels': relaciones([['drawing', '../drawings/drawing1.xml']]),
++    'xl/drawings/drawing1.xml': `<xdr:wsDr xmlns:xdr="${dibujo}" xmlns:a="${dibujoBase}" xmlns:r="${relacion}">
++      <xdr:oneCellAnchor>
++        <xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>
++        <xdr:ext cx="1371600" cy="914400"/>
++        <xdr:pic>
++          <xdr:nvPicPr><xdr:cNvPr id="1" name="Autoservicio San Jorge"/><xdr:cNvPicPr/></xdr:nvPicPr>
++          <xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>
++          <xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>
++        </xdr:pic><xdr:clientData/>
++      </xdr:oneCellAnchor>
++    </xdr:wsDr>`,
++    'xl/drawings/_rels/drawing1.xml.rels': relaciones([['image', '../media/logo.jpg']]),
++    'xl/media/logo.jpg': logo,
++  });
++}
++
++module.exports = { generarExcel };
+diff --git a/backend/exportaciones/pdf.js b/backend/exportaciones/pdf.js
+new file mode 100644
+index 0000000..39c26ce
+--- /dev/null
++++ b/backend/exportaciones/pdf.js
+@@ -0,0 +1,96 @@
++const { readFileSync } = require('node:fs');
++const { join } = require('node:path');
++
++const logo = readFileSync(join(__dirname, '../assets/logo-san-jorge.jpg'));
++const winAnsi = '€\u0000‚ƒ„…†‡ˆ‰Š‹Œ\u0000Ž\u0000\u0000‘’“”•–—˜™š›œ\u0000žŸ';
++const ancho = 595;
++const alto = 842;
++const lineasPorPagina = 43;
++
++function textoPDF(texto) {
++  // PDF permite declarar WinAnsi para las fuentes estándar. La codificación
++  // hexadecimal protege paréntesis, barras y saltos presentes en los datos.
++  const bytes = Array.from(String(texto ?? '').normalize('NFC'), caracter => {
++    const codigo = caracter.codePointAt(0);
++    if ((codigo >= 32 && codigo <= 126) || (codigo >= 160 && codigo <= 255)) return codigo;
++    const especial = winAnsi.indexOf(caracter);
++    return especial < 0 ? 63 : especial + 128;
++  });
++  return `<${Buffer.from(bytes).toString('hex')}>`;
++}
++
++function lineas(texto) {
++  const resultado = [];
++  for (const parrafo of String(texto ?? '').split(/\r?\n/)) {
++    let linea = '';
++    for (const palabra of parrafo.match(/\S{1,84}/gu) || []) {
++      if (linea && linea.length + palabra.length + 1 > 84) {
++        resultado.push(linea);
++        linea = '';
++      }
++      linea = linea ? `${linea} ${palabra}` : palabra;
++    }
++    resultado.push(linea);
++  }
++  return resultado;
++}
++
++function stream(contenido, atributos = '') {
++  return Buffer.concat([
++    Buffer.from(`<< ${atributos} /Length ${contenido.length} >>\nstream\n`),
++    contenido,
++    Buffer.from('\nendstream'),
++  ]);
++}
++
++function generarPDF(titulo, subtitulo, contenido) {
++  const objetos = [
++    null,
++    '<< /Type /Catalog /Pages 2 0 R >>',
++    null,
++    '<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>',
++    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
++    stream(logo, '/Type /XObject /Subtype /Image /Width 360 /Height 240 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode'),
++  ];
++  const filas = contenido.flatMap(lineas);
++  const numeroPaginas = Math.max(1, Math.ceil(filas.length / lineasPorPagina));
++  const paginas = [];
++
++  for (let pagina = 0; pagina < numeroPaginas; pagina++) {
++    const paginaId = objetos.length;
++    const desde = pagina * lineasPorPagina;
++    paginas.push(`${paginaId} 0 R`);
++    const cuerpo = filas.slice(desde, desde + lineasPorPagina).map((linea, indice) => (
++      `BT /Cuerpo 10 Tf 42 ${704 - indice * 15} Td ${textoPDF(linea)} Tj ET`
++    )).join('\n');
++
++    objetos.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${ancho} ${alto}]
++      /Resources << /Font << /Cuerpo 3 0 R /Titulo 4 0 R >> /XObject << /Logo 5 0 R >> >>
++      /Contents ${paginaId + 1} 0 R >>`);
++    objetos.push(stream(Buffer.from(`
++q 114 0 0 76 42 750 cm /Logo Do Q
++0.10 0.20 0.35 rg
++BT /Titulo 19 Tf 165 798 Td ${textoPDF(titulo)} Tj ET
++BT /Cuerpo 10 Tf 165 774 Td ${textoPDF(subtitulo)} Tj ET
++0.72 0.77 0.82 RG 42 736 m 553 736 l S
++0.12 0.15 0.18 rg
++${cuerpo}
++BT /Cuerpo 9 Tf 42 42 Td ${textoPDF(`Autoservicio San Jorge     Página ${pagina + 1} de ${numeroPaginas}`)} Tj ET
++`)));
++  }
++  objetos[2] = `<< /Type /Pages /Count ${numeroPaginas} /Kids [${paginas.join(' ')}] >>`;
++
++  const partes = [Buffer.from('%PDF-1.4\n')];
++  const offsets = ['0000000000 65535 f \n'];
++  let posicion = partes[0].length;
++  for (let id = 1; id < objetos.length; id++) {
++    offsets.push(`${String(posicion).padStart(10, '0')} 00000 n \n`);
++    const objeto = Buffer.concat([Buffer.from(`${id} 0 obj\n`), Buffer.from(objetos[id]), Buffer.from('\nendobj\n')]);
++    partes.push(objeto);
++    posicion += objeto.length;
++  }
++  partes.push(Buffer.from(`xref\n0 ${objetos.length}\n${offsets.join('')}trailer\n<< /Size ${objetos.length} /Root 1 0 R >>\nstartxref\n${posicion}\n%%EOF\n`));
++  return Buffer.concat(partes);
++}
++
++module.exports = { generarPDF };
+diff --git a/backend/mantenimientoRefacciones.js b/backend/mantenimientoRefacciones.js
+new file mode 100644
+index 0000000..d325302
+--- /dev/null
++++ b/backend/mantenimientoRefacciones.js
+@@ -0,0 +1,25 @@
++const mensajeRefacciones = 'Agrega al menos una refacción con cantidad válida para continuar con el mantenimiento.';
++
++function esRefaccionValida(producto) {
++  if (!producto || !/^\d+$/.test(String(producto.cantidad))
++      || Number(producto.cantidad) < 1 || Number(producto.cantidad) > 2147483647) {
++    return false;
++  }
++  const id = Number(producto.id);
++  return (/^\d+$/.test(String(producto.id)) && id > 0 && id <= 2147483647)
++    || (typeof producto.id === 'string' && /^custom_prod_\w+$/.test(producto.id)
++      && typeof producto.nombre === 'string' && Boolean(producto.nombre.trim()));
++}
++
++function refaccionesEspecialesDeOrden(orden) {
++  if (Array.isArray(orden.refacciones_especiales)) return orden.refacciones_especiales;
++
++  // Las órdenes anteriores guardaban las solicitudes especiales en observaciones.
++  return [...(orden.observaciones || '').matchAll(/\[Refacci[oó]n Especial: (.*?) x(\d+) \(\$([\d.]+) c\/u\)\]/g)]
++    .map(([, nombre, cantidad, precio], index) => ({
++      id: `custom_prod_legacy_${index}`, nombre, cantidad: Number(cantidad), precio: Number(precio),
++    }))
++    .filter(esRefaccionValida);
++}
++
++module.exports = { esRefaccionValida, mensajeRefacciones, refaccionesEspecialesDeOrden };
+diff --git a/backend/routes/mantenimientoRoutes.js b/backend/routes/mantenimientoRoutes.js
+index 87551a3..cd937d5 100644
+--- a/backend/routes/mantenimientoRoutes.js
++++ b/backend/routes/mantenimientoRoutes.js
+@@ -1,8 +1,9 @@
+ const express = require('express');
+-const { getMantenimientos, createMantenimiento, updateMantenimientoFull, updateMantenimientoEstado } = require('../controllers/mantenimientoController');
++const { getMantenimientos, descargarOrdenMantenimiento, createMantenimiento, updateMantenimientoFull, updateMantenimientoEstado } = require('../controllers/mantenimientoController');
+ const router = express.Router();
+ 
+ router.get('/', getMantenimientos);
++router.get('/:id/orden.pdf', descargarOrdenMantenimiento);
+ router.post('/', createMantenimiento);
+ router.put('/:id', updateMantenimientoFull);
+ router.put('/:id/estado', updateMantenimientoEstado);
+diff --git a/backend/routes/reportes.js b/backend/routes/reportes.js
+index 2199d7f..e2da6c5 100644
+--- a/backend/routes/reportes.js
++++ b/backend/routes/reportes.js
+@@ -1,50 +1,101 @@
+ const express = require('express');
+ const router = express.Router();
+ const pool = require('../db');
++const { generarPDF } = require('../exportaciones/pdf');
++const { generarExcel } = require('../exportaciones/excel');
+ 
+-/**
+- * GET /api/reportes/ventas
+- */
+-router.get('/ventas', async (req, res) => {
+-  try {
+-    const { rows } = await pool.query(`
++async function consultarVentas(fecha = null) {
++  // El valor por defecto de Venta.fecha usa la zona configurada en PostgreSQL.
++  const zonaAlmacenamiento = "current_setting('TimeZone')";
++  const fechaLocal = `(v.fecha AT TIME ZONE ${zonaAlmacenamiento} AT TIME ZONE 'America/Mexico_City')`;
++  const { rows } = await pool.query(`
+       SELECT 
+         v.idVenta as id,
+         u.nombre AS cliente,
+-        STRING_AGG(p.nombre || ' x' || dv.cantidad::text, ', ' ORDER BY p.nombre) AS servicio,
+-        v.fecha,
++        COALESCE(STRING_AGG(p.nombre || ' x' || dv.cantidad::text, ', ' ORDER BY p.nombre), anterior.nombre) AS servicio,
++        TO_CHAR(${fechaLocal}, 'YYYY-MM-DD') AS fecha_iso,
++        TO_CHAR(${fechaLocal}, 'FMDD/FMMM/YYYY') AS fecha,
+         v.total,
+         v.metodo_pago
+       FROM Venta v
+       LEFT JOIN Usuarios u ON u.idUsuarios = v.idUsuarios
+       LEFT JOIN DetalleVenta dv ON dv.idVenta = v.idVenta
+       LEFT JOIN Productos p ON p.idProductos = dv.idProductos
+-      GROUP BY v.idVenta, u.nombre, v.fecha, v.total, v.metodo_pago
+-      ORDER BY v.fecha DESC
+-    `);
++      LEFT JOIN Productos anterior ON anterior.idProductos = v.idProductos
++      WHERE $1::date IS NULL OR (
++        v.fecha >= ($1::date::timestamp AT TIME ZONE 'America/Mexico_City' AT TIME ZONE ${zonaAlmacenamiento})
++        AND v.fecha < (($1::date + 1)::timestamp AT TIME ZONE 'America/Mexico_City' AT TIME ZONE ${zonaAlmacenamiento})
++      )
++      GROUP BY v.idVenta, u.nombre, v.fecha, v.total, v.metodo_pago, anterior.nombre
++      ORDER BY v.fecha DESC, v.idVenta DESC
++    `, [fecha]);
+ 
+-    // Map metodo_pago to strings
+-    const mapped = rows.map(r => {
+-      let metodo = 'efectivo';
+-      if (r.metodo_pago === 2) metodo = 'tarjeta';
+-      if (r.metodo_pago === 3) metodo = 'transferencia';
+-      return {
+-        id: `V-${r.id.toString().padStart(3, '0')}`,
+-        cliente: r.cliente || 'Cliente General',
+-        servicio: r.servicio || 'Venta',
+-        fecha: new Date(r.fecha).toLocaleDateString('es-ES'),
+-        total: Number(r.total) || 0,
+-        metodo
+-      };
+-    });
++  return rows.map(r => ({
++    id: `V-${String(r.id).padStart(3, '0')}`,
++    cliente: r.cliente || 'Cliente General',
++    servicio: r.servicio || 'Venta',
++    fecha: r.fecha,
++    fechaISO: r.fecha_iso,
++    total: Number(r.total) || 0,
++    metodo: { 2: 'tarjeta', 3: 'transferencia' }[r.metodo_pago] || 'efectivo',
++  }));
++}
+ 
+-    res.json(mapped);
++router.get('/ventas', async (req, res) => {
++  try {
++    res.json(await consultarVentas());
+   } catch (err) {
+     console.error(err);
+     res.status(500).json({ error: 'Error al obtener reporte de ventas' });
+   }
+ });
+ 
++router.get('/ventas/diarias', async (req, res) => {
++  const { fecha, formato = 'json' } = req.query;
++  const fechaValida = typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)
++    && fecha >= '0001-01-01' && new Date(fecha).toJSON()?.slice(0, 10) === fecha;
++  if (!fechaValida) return res.status(400).json({ error: 'Selecciona una fecha válida (AAAA-MM-DD)' });
++  if (!['json', 'pdf', 'xlsx'].includes(formato)) {
++    return res.status(400).json({ error: 'Formato de reporte inválido' });
++  }
++
++  try {
++    const ventas = await consultarVentas(fecha);
++    const total = ventas.reduce((centavos, venta) => centavos + Math.round(venta.total * 100), 0) / 100;
++    const cantidad = ventas.length;
++    res.set('Cache-Control', 'private, no-store');
++    if (formato === 'json') return res.json({ fecha, cantidad, total, ventas });
++
++    if (formato === 'pdf') {
++      const contenido = ventas.flatMap(v => [
++        `${v.id} | ${v.cliente} | $${v.total.toFixed(2)} MXN | ${v.metodo}`,
++        `Detalle: ${v.servicio}`,
++        '',
++      ]);
++      const archivo = generarPDF('Resumen diario de ventas', fecha, [
++        `Ventas registradas: ${cantidad}`,
++        `Total: $${total.toFixed(2)} MXN`,
++        '',
++        ...(cantidad ? contenido : ['No hay ventas registradas para esta fecha.']),
++      ]);
++      return res.attachment(`ventas-diarias-${fecha}.pdf`).send(archivo);
++    }
++
++    const archivo = generarExcel([
++      ['Resumen diario de ventas', fecha],
++      ['Ventas registradas', cantidad],
++      ['Total (MXN)', total],
++      [],
++      ['Folio', 'Cliente', 'Detalle', 'Fecha', 'Total (MXN)', 'Método de pago'],
++      ...ventas.map(v => [v.id, v.cliente, v.servicio, v.fechaISO, v.total, v.metodo]),
++    ]);
++    return res.attachment(`ventas-diarias-${fecha}.xlsx`).send(archivo);
++  } catch (err) {
++    console.error(err);
++    res.status(500).json({ error: 'Error al generar el resumen diario de ventas' });
++  }
++});
++
+ /**
+  * GET /api/reportes/productos
+  */
+diff --git a/backend/supabase_schema.sql b/backend/supabase_schema.sql
+index 84b8783..eeb24a7 100644
+--- a/backend/supabase_schema.sql
++++ b/backend/supabase_schema.sql
+@@ -192,6 +192,10 @@ CREATE TABLE IF NOT EXISTS Mantenimiento (
+   costo_final NUMERIC DEFAULT 0
+ );
+ 
++ALTER TABLE Mantenimiento
++  ADD COLUMN IF NOT EXISTS checklist TEXT,
++  ADD COLUMN IF NOT EXISTS refacciones_especiales JSONB;
++
+ -- 21. Detalle Mantenimiento Servicios
+ CREATE TABLE IF NOT EXISTS DetalleMantenimientoServicios (
+   idDetalle SERIAL PRIMARY KEY,
+diff --git a/taller-frontend/src/pages/AdminMantenimiento.jsx b/taller-frontend/src/pages/AdminMantenimiento.jsx
+index 0d28f80..e5a4ed1 100644
+--- a/taller-frontend/src/pages/AdminMantenimiento.jsx
++++ b/taller-frontend/src/pages/AdminMantenimiento.jsx
+@@ -10,6 +10,7 @@ import {
+   createMantenimiento,
+   updateMantenimiento,
+   updateMantenimientoEstado,
++  descargarOrdenMantenimiento,
+   fetchCitas,
+   updateCita,
+   fetchProductosCompatibles
+@@ -271,6 +272,10 @@ export default function AdminMantenimiento() {
+       toast.warning('Selecciona un vehículo antes de continuar.');
+       return;
+     }
++    if (refacciones.length === 0) {
++      toast.warning('Agrega al menos una refacción antes de registrar el mantenimiento.');
++      return;
++    }
+ 
+     try {
+       const payload = {
+@@ -405,6 +410,10 @@ export default function AdminMantenimiento() {
+ 
+   const guardarHojaTrabajo = async (nuevoEstado = null) => {
+     if (!mantActivo) return;
++    if (refaccionesHoja.length === 0) {
++      toast.warning('Agrega al menos una refacción en la hoja de trabajo.');
++      return;
++    }
+     setGuardandoHoja(true);
+     try {
+       const estadoFinal = nuevoEstado || estadoHoja;
+@@ -416,7 +425,7 @@ export default function AdminMantenimiento() {
+         costo_final: calcularTotalHoja(),
+         checklist: checklistHoja,
+         servicios: trabajosHoja.map(t => ({ id: t.id, precio: t.precio, descripcion: t.descripcion })),
+-        productos: refaccionesHoja.map(r => ({ id: r.id, cantidad: r.cantidad, precio: r.precio_unitario }))
++        productos: refaccionesHoja.map(r => ({ id: r.id, nombre: r.nombre, cantidad: r.cantidad, precio: r.precio_unitario }))
+       };
+ 
+       await updateMantenimiento(mantActivo.id, payload);
+@@ -444,9 +453,13 @@ export default function AdminMantenimiento() {
+     return m.estado === filtroEstado;
+   });
+ 
+-  const aprobarOrdenServicio = async (mId, nuevoEstado = 'En proceso') => {
++  const aprobarOrdenServicio = async (orden, nuevoEstado = 'En proceso') => {
++    if (!orden.productos?.length) {
++      toast.warning('Abre la hoja de requisitos y agrega una refacción para aprobar la orden.');
++      return;
++    }
+     try {
+-      await updateMantenimientoEstado(mId, nuevoEstado);
++      await updateMantenimientoEstado(orden.id, nuevoEstado);
+       await loadData();
+       toast.success(nuevoEstado === 'Completado' ? 'Orden de Servicio aprobada y completada' : 'Orden de Servicio aprobada y puesta en proceso');
+     } catch (err) {
+@@ -454,6 +467,14 @@ export default function AdminMantenimiento() {
+     }
+   };
+ 
++  const descargarOrden = async (id) => {
++    try {
++      await descargarOrdenMantenimiento(id);
++    } catch (err) {
++      toast.error(err.message);
++    }
++  };
++
+   return (
+     <AdminLayout activeTab="mantenimiento">
+       <div className="p-4 md:p-8 max-w-7xl mx-auto">
+@@ -532,14 +553,14 @@ export default function AdminMantenimiento() {
+                         <div className="flex items-center gap-2">
+                           <button
+                             type="button"
+-                            onClick={() => aprobarOrdenServicio(m.id, 'En proceso')}
++                            onClick={() => aprobarOrdenServicio(m, 'En proceso')}
+                             className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
+                           >
+                             ✓ Aprobar Orden
+                           </button>
+                           <button
+                             type="button"
+-                            onClick={() => aprobarOrdenServicio(m.id, 'Completado')}
++                            onClick={() => aprobarOrdenServicio(m, 'Completado')}
+                             className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
+                           >
+                             ✓ Aprobar & Completar
+@@ -576,7 +597,16 @@ export default function AdminMantenimiento() {
+                         </div>
+                       </div>
+ 
+-                      <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
++                      <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
++                        {m.estado === 'Completado' && (
++                          <button
++                            type="button"
++                            onClick={() => descargarOrden(m.id)}
++                            className="border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs font-bold px-4 py-2.5 rounded-xl"
++                          >
++                            Descargar orden PDF
++                          </button>
++                        )}
+                         <button
+                           type="button"
+                           onClick={() => abrirHojaTrabajo(m)}
+@@ -808,6 +838,9 @@ export default function AdminMantenimiento() {
+                 <h4 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
+                   <span>🔩</span> Refacciones y Repuestos Utilizados (Tiempo Real)
+                 </h4>
++                {!refaccionesHoja.length && (
++                  <p className="mb-3 text-xs text-amber-900">Agrega al menos una refacción para guardar o completar.</p>
++                )}
+ 
+                 <div className="space-y-2 mb-3">
+                   {refaccionesHoja.map((r, idx) => (
+@@ -1061,7 +1094,7 @@ export default function AdminMantenimiento() {
+ 
+                 <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-6 mb-6">
+                   <h3 className="text-sm font-bold text-yellow-800 flex items-center gap-2 mb-4">
+-                    Partes y Refacciones Utilizadas
++                    Partes y Refacciones Utilizadas (obligatorio)
+                   </h3>
+ 
+                   {refacciones.map(r => (
+diff --git a/taller-frontend/src/pages/RemisionTecnico.jsx b/taller-frontend/src/pages/RemisionTecnico.jsx
+index 5454aba..9219261 100644
+--- a/taller-frontend/src/pages/RemisionTecnico.jsx
++++ b/taller-frontend/src/pages/RemisionTecnico.jsx
+@@ -342,8 +342,8 @@ export default function RemisionTecnico() {
+       toast.warning('Por favor selecciona un vehículo para emitir la orden');
+       return;
+     }
+-    if (trabajos.length === 0 && refacciones.length === 0) {
+-      toast.warning('Agrega al menos un servicio o refacción a la orden');
++    if (refacciones.length === 0) {
++      toast.warning('Agrega al menos una refacción antes de emitir la orden.');
+       return;
+     }
+ 
+@@ -876,7 +876,7 @@ export default function RemisionTecnico() {
+                   </div>
+                   <div>
+                     <h2 className="text-lg font-bold text-slate-900 tracking-tight">Requisición de Refacciones y Materiales</h2>
+-                    <p className="text-xs text-slate-500">Solicitud directa de repuestos al almacén o compra especial</p>
++                    <p className="text-xs text-slate-500">Selecciona al menos una refacción de almacén o de compra especial.</p>
+                   </div>
+                 </div>
+ 
+diff --git a/taller-frontend/src/pages/Reportes.jsx b/taller-frontend/src/pages/Reportes.jsx
+index 93a32b8..7efe8a8 100644
+--- a/taller-frontend/src/pages/Reportes.jsx
++++ b/taller-frontend/src/pages/Reportes.jsx
+@@ -1,14 +1,24 @@
+ import React, { useState, useEffect } from 'react';
+ import AdminLayout from '../layouts/AdminLayout';
+ import logo from '../assets/logo_final.png';
+-import { fetchReporteVentas, fetchReporteProductos, fetchReporteServicios } from '../utils/api';
++import {
++  fetchReporteVentas, fetchReporteProductos, fetchReporteServicios,
++  fetchResumenVentasDiarias, descargarVentasDiarias,
++} from '../utils/api';
+ 
+ const carWatermark = "https://www.transparenttextures.com/patterns/stardust.png";
++const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+ 
+ export default function Reportes() {
+   const [activeReportTab, setActiveReportTab] = useState('productos');
+ 
+   const [dataVentas, setDataVentas] = useState([]);
++  const [fechaDiaria, setFechaDiaria] = useState(() =>
++    new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' })
++  );
++  const [resumenDiario, setResumenDiario] = useState(null);
++  const [errorResumen, setErrorResumen] = useState('');
++  const [descargando, setDescargando] = useState(false);
+   const [prodStats, setProdStats] = useState({ valorInventario: 0, productosVendidosMes: 0, ingresosTotales: 0 });
+   const [rendimientoProductos, setRendimientoProductos] = useState([]);
+   const [servStats, setServStats] = useState({ serviciosRealizados: 0, ingresosPorServicios: 0, ticketPromedio: 0 });
+@@ -29,14 +39,9 @@ export default function Reportes() {
+   // Datos filtrados de ventas
+   const ventasFiltradas = (() => {
+     if (!filtroAplicado || (!fechaInicio && !fechaFin)) return dataVentas;
+-    return dataVentas.filter(v => {
+-      const fechaVenta = new Date(v.fecha);
+-      const desde = fechaInicio ? new Date(fechaInicio + 'T00:00:00') : null;
+-      const hasta = fechaFin   ? new Date(fechaFin   + 'T23:59:59') : null;
+-      if (desde && fechaVenta < desde) return false;
+-      if (hasta && fechaVenta > hasta) return false;
+-      return true;
+-    });
++    return dataVentas.filter(v => v.fechaISO
++      && (!fechaInicio || v.fechaISO >= fechaInicio)
++      && (!fechaFin || v.fechaISO <= fechaFin));
+   })();
+ 
+   useEffect(() => {
+@@ -59,6 +64,27 @@ export default function Reportes() {
+     }).catch(console.error);
+   }, []);
+ 
++  useEffect(() => {
++    if (activeReportTab !== 'ventas' || !fechaDiaria) return;
++    const controller = new AbortController();
++    fetchResumenVentasDiarias(fechaDiaria, controller.signal).then(setResumenDiario).catch(err => {
++      if (!controller.signal.aborted) setErrorResumen(err.message);
++    });
++    return () => controller.abort();
++  }, [activeReportTab, fechaDiaria]);
++
++  const descargarResumen = async (formato) => {
++    setDescargando(true);
++    setErrorResumen('');
++    try {
++      await descargarVentasDiarias(fechaDiaria, formato);
++    } catch (err) {
++      setErrorResumen(err.message);
++    } finally {
++      setDescargando(false);
++    }
++  };
++
+   const handleGenerarReporte = () => {
+     setFiltroAplicado(true);
+   };
+@@ -221,6 +247,40 @@ export default function Reportes() {
+         {/* PESTAÑA VENTAS */}
+         {activeReportTab === 'ventas' && (
+           <div className="space-y-6 print:hidden">
++            <section className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
++              <h2 className="mb-4 text-lg font-bold text-gray-900">Resumen diario de ventas</h2>
++              <div className="flex flex-wrap items-end gap-3">
++                <label className="text-sm font-semibold text-gray-700">
++                  Fecha del resumen
++                  <input
++                    type="date"
++                    value={fechaDiaria}
++                    disabled={descargando}
++                    onChange={event => {
++                      setFechaDiaria(event.target.value);
++                      setResumenDiario(null);
++                      setErrorResumen('');
++                    }}
++                    className="mt-1 block rounded-lg border border-gray-300 bg-gray-50 p-2.5"
++                  />
++                </label>
++                <button type="button" disabled={!fechaDiaria || descargando} onClick={() => descargarResumen('pdf')}
++                  className="rounded-lg bg-[#1a56db] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
++                  Descargar PDF
++                </button>
++                <button type="button" disabled={!fechaDiaria || descargando} onClick={() => descargarResumen('xlsx')}
++                  className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 disabled:opacity-50">
++                  Descargar Excel
++                </button>
++              </div>
++              {resumenDiario?.fecha === fechaDiaria && (
++                <p className="mt-4 text-sm text-gray-700" role="status">
++                  {resumenDiario.cantidad} {resumenDiario.cantidad === 1 ? 'venta registrada' : 'ventas registradas'}
++                  {' · '}<strong>{moneda.format(resumenDiario.total)} MXN</strong>
++                </p>
++              )}
++              {errorResumen && <p role="alert" className="mt-3 text-sm text-red-700">{errorResumen}</p>}
++            </section>
+             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                   <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Fecha inicio</label>
+diff --git a/taller-frontend/src/utils/api.js b/taller-frontend/src/utils/api.js
+index 511ef0b..27fc0d8 100644
+--- a/taller-frontend/src/utils/api.js
++++ b/taller-frontend/src/utils/api.js
+@@ -19,6 +19,24 @@ async function request(path, options = {}) {
+   return body;
+ }
+ 
++async function descargarArchivo(path, nombre) {
++  const response = await fetch(`${BASE_URL}${path}`);
++  const tipo = nombre.endsWith('.pdf')
++    ? 'application/pdf'
++    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
++  if (!response.ok || response.headers.get('content-type')?.split(';')[0] !== tipo) {
++    const body = await response.json().catch(() => null);
++    throw new Error(body?.error || 'No se pudo descargar el archivo.');
++  }
++
++  const url = URL.createObjectURL(await response.blob());
++  const enlace = document.createElement('a');
++  enlace.href = url;
++  enlace.download = nombre;
++  enlace.click();
++  setTimeout(() => URL.revokeObjectURL(url), 1000);
++}
++
+ // ─── Citas ───────────────────────────────────────────────────────────────────
+ export const fetchCitas = () => request('/api/citas');
+ export const createCita = (data) => request('/api/citas', {
+@@ -156,8 +174,17 @@ export const fetchMantenimientos = () => request('/api/mantenimientos');
+ export const createMantenimiento = (data) => request('/api/mantenimientos', { method: 'POST', body: JSON.stringify(data) });
+ export const updateMantenimiento = (id, data) => request(`/api/mantenimientos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+ export const updateMantenimientoEstado = (id, estado) => request(`/api/mantenimientos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) });
++export const descargarOrdenMantenimiento = (id) => descargarArchivo(
++  `/api/mantenimientos/${id}/orden.pdf`, `orden-mantenimiento-${id}.pdf`
++);
+ 
+ // --- Reportes ---
+ export const fetchReporteVentas = () => request('/api/reportes/ventas');
++export const fetchResumenVentasDiarias = (fecha, signal) => request(
++  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha })}`, { signal }
++);
++export const descargarVentasDiarias = (fecha, formato) => descargarArchivo(
++  `/api/reportes/ventas/diarias?${new URLSearchParams({ fecha, formato })}`, `ventas-diarias-${fecha}.${formato}`
++);
+ export const fetchReporteProductos = () => request('/api/reportes/productos');
+ export const fetchReporteServicios = () => request('/api/reportes/servicios');
+-- 
+2.53.0.windows.1
+

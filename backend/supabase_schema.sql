@@ -195,6 +195,10 @@ CREATE TABLE IF NOT EXISTS Mantenimiento (
   costo_final NUMERIC DEFAULT 0
 );
 
+ALTER TABLE Mantenimiento
+  ADD COLUMN IF NOT EXISTS checklist TEXT,
+  ADD COLUMN IF NOT EXISTS refacciones_especiales JSONB;
+
 -- 21. Detalle Mantenimiento Servicios
 CREATE TABLE IF NOT EXISTS DetalleMantenimientoServicios (
   idDetalle SERIAL PRIMARY KEY,
