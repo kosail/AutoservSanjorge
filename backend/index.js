@@ -26,6 +26,7 @@ const helmet = require('helmet');
 
 const bcrypt = require('bcryptjs');
 const pool = require('./db');
+const { asegurarMarcasUnicas } = require('./migrations/marcasUnicas');
 
 const marcaRoutes = require('./routes/marcaRoutes');
 const vehiculoRoutes = require('./routes/vehiculoRoutes');
@@ -410,6 +411,8 @@ const initializeDatabase = async () => {
     CREATE INDEX IF NOT EXISTS idx_compatibilidad_marcas
     ON Productos_compatibilidad(idMarcas)
   `).catch(() => {});
+
+  await asegurarMarcasUnicas(pool);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS Factura (

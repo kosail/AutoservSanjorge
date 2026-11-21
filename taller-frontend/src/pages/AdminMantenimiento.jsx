@@ -10,16 +10,23 @@ import {
   createMantenimiento,
   updateMantenimiento,
   updateMantenimientoEstado,
-  descargarOrdenMantenimiento,
   fetchCitas,
   updateCita,
-  fetchProductosCompatibles
+  fetchProductosCompatibles,
+  exportarMantenimiento,
+  exportarMantenimientos
 } from '../utils/api';
+import {
+  descargarBlob,
+  listadoTieneDatos,
+  MENSAJE_LISTADO_VACIO,
+} from '../utils/descargas';
 
 export default function AdminMantenimiento() {
   const toast = useToast();
   const [mantenimientos, setMantenimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportando, setExportando] = useState(null);
   const [citasPendientes, setCitasPendientes] = useState([]);
   const [selectedCitaId, setSelectedCitaId] = useState('');
 
@@ -61,7 +68,6 @@ export default function AdminMantenimiento() {
   const [observacionesHoja, setObservacionesHoja] = useState('');
   const [estadoHoja, setEstadoHoja] = useState('En proceso');
   const [guardandoHoja, setGuardandoHoja] = useState(false);
-  const [descargandoOrden, setDescargandoOrden] = useState(null);
 
   const loadData = async () => {
     try {
@@ -453,15 +459,36 @@ export default function AdminMantenimiento() {
     }
   };
 
-  const descargarOrden = async (id) => {
-    setDescargandoOrden(id);
+  const ejecutarExportacion = async (clave, accion) => {
+    if (exportando) return;
+    setExportando(clave);
     try {
-      await descargarOrdenMantenimiento(id);
+      const { blob, filename } = await accion();
+      descargarBlob(blob, filename);
+      toast.success('Archivo descargado correctamente');
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message, 'Error al exportar');
     } finally {
-      setDescargandoOrden(null);
+      setExportando(null);
     }
+  };
+
+  const exportarMantenimientoIndividual = (mantenimiento, formato) => {
+    const clave = `mantenimiento-${mantenimiento.id}-${formato}`;
+    return ejecutarExportacion(clave, () => exportarMantenimiento(mantenimiento.id, formato));
+  };
+
+  const exportarListado = (formato) => {
+    if (!listadoTieneDatos(mantenimientosFiltrados)) {
+      toast.warning(MENSAJE_LISTADO_VACIO);
+      return;
+    }
+
+    const estado = filtroEstado === 'Todos' ? '' : filtroEstado;
+    return ejecutarExportacion(
+      `listado-${formato}`,
+      () => exportarMantenimientos(formato, estado)
+    );
   };
 
   return (
@@ -471,6 +498,24 @@ export default function AdminMantenimiento() {
           <div>
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1">Centro de Mantenimiento & Inspección</h2>
             <p className="text-gray-500 text-sm">Gestiona la hoja de requisitos en tiempo real y aprueba órdenes de servicio enviadas por técnicos</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => exportarListado('pdf')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-pdf' ? 'Generando PDF...' : 'Exportar listado PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() => exportarListado('xlsx')}
+              disabled={loading || Boolean(exportando)}
+              className="border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportando === 'listado-xlsx' ? 'Generando Excel...' : 'Exportar listado Excel'}
+            </button>
           </div>
         </div>
 
@@ -586,27 +631,39 @@ export default function AdminMantenimiento() {
                         </div>
                       </div>
 
-                      <div className="flex w-full flex-col items-end gap-3 md:w-auto">
-                        <div className="flex w-full flex-wrap items-center justify-between gap-3 md:justify-end">
-                          <button
-                            type="button"
-                            disabled={descargandoOrden !== null}
-                            onClick={() => descargarOrden(m.id)}
-                            className="border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs font-bold px-4 py-2.5 rounded-xl disabled:opacity-50"
-                          >
-                            {descargandoOrden === m.id ? 'Descargando…' : 'Descargar orden PDF'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => abrirHojaTrabajo(m)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm"
-                          >
-                            <span>📋 Hoja de Requisitos (Tiempo Real)</span>
-                            <span className="bg-indigo-800/60 px-2 py-0.5 rounded-lg text-[10px] font-mono">{porcentajeProgreso}%</span>
-                          </button>
-                        </div>
+                      <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => abrirHojaTrabajo(m)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm"
+                        >
+                          <span>📋 Hoja de Requisitos (Tiempo Real)</span>
+                          <span className="bg-indigo-800/60 px-2 py-0.5 rounded-lg text-[10px] font-mono">{porcentajeProgreso}%</span>
+                        </button>
 
-                        <div className="text-right text-xl font-black text-gray-900">${Number(m.costo_final || 0).toLocaleString()}</div>
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'pdf')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar PDF"
+                          className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-pdf` ? '...' : 'PDF'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportarMantenimientoIndividual(m, 'xlsx')}
+                          disabled={Boolean(exportando)}
+                          title="Descargar Excel"
+                          className="border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportando === `mantenimiento-${m.id}-xlsx` ? '...' : 'Excel'}
+                        </button>
+
+                        <div className="text-right">
+                          <div className="text-xl font-black text-gray-900">${Number(m.costo_final || 0).toLocaleString()}</div>
+                        </div>
                       </div>
                     </div>
 
@@ -671,19 +728,6 @@ export default function AdminMantenimiento() {
                 </div>
               </div>
               
-              <button
-                type="button"
-                onClick={() => descargarOrden(mantActivo.id)}
-                disabled={guardandoHoja || descargandoOrden !== null}
-                title="Descarga la última versión guardada de la orden"
-                className="order-last sm:order-none sm:ml-auto inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl text-xs font-bold transition disabled:opacity-50"
-              >
-                <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" />
-                </svg>
-                {descargandoOrden === mantActivo.id ? 'Descargando…' : 'Descargar hoja de mantenimiento (PDF)'}
-              </button>
-
               <button type="button" aria-label="Cerrar orden" onClick={cerrarHojaTrabajo} disabled={guardandoHoja} className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition disabled:opacity-50">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>

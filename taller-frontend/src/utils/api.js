@@ -1,4 +1,42 @@
+import { nombreArchivoConFecha, parseFilenameFromDisposition } from './descargas.js';
+
 const BASE_URL = import.meta.env.VITE_API_URL || '';
+
+function getToken() {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  } catch {
+    return null;
+  }
+}
+
+async function downloadRequest(path, fallbackFilename) {
+  const token = getToken();
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await response.json().catch(() => ({}));
+      const error = new Error(data.error || `Error ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+    const error = new Error(response.statusText || `Error ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  const blob = await response.blob();
+  const filename = parseFilenameFromDisposition(
+    response.headers.get('content-disposition'),
+    fallbackFilename
+  );
+
+  return { blob, filename };
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -177,6 +215,18 @@ export const updateMantenimientoEstado = (id, estado) => request(`/api/mantenimi
 export const descargarOrdenMantenimiento = (id) => descargarArchivo(
   `/api/mantenimientos/${id}/orden.pdf`, `orden-mantenimiento-${id}.pdf`
 );
+export const exportarMantenimiento = (id, formato) => downloadRequest(
+  `/api/mantenimientos/${id}/export?formato=${encodeURIComponent(formato)}`,
+  nombreArchivoConFecha(`mantenimiento-${id}`, formato)
+);
+export const exportarMantenimientos = (formato, estado) => {
+  const params = new URLSearchParams({ formato });
+  if (estado) params.set('estado', estado);
+  return downloadRequest(
+    `/api/mantenimientos/export?${params.toString()}`,
+    nombreArchivoConFecha('mantenimientos', formato)
+  );
+};
 
 // --- Reportes ---
 export const fetchReporteVentas = () => request('/api/reportes/ventas');
