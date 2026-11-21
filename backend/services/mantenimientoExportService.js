@@ -1,7 +1,18 @@
 const fs = require('fs');
 const path = require('path');
-const PDFDocument = require('pdfkit');
-const ExcelJS = require('exceljs');
+
+let PDFDocument;
+let ExcelJS;
+
+const obtenerPDFDocument = () => {
+  if (!PDFDocument) PDFDocument = require('pdfkit');
+  return PDFDocument;
+};
+
+const obtenerExcelJS = () => {
+  if (!ExcelJS) ExcelJS = require('exceljs');
+  return ExcelJS;
+};
 
 const LOGO_PATH = path.join(__dirname, '..', 'assets', 'logo.png');
 const NEGRO = '#0f172a';
@@ -107,6 +118,7 @@ const textoChecklist = (mantenimiento) => {
 };
 
 const crearDocumento = (layout = 'portrait', titulo) => {
+  const PDFDocument = obtenerPDFDocument();
   const doc = new PDFDocument({
     size: 'A4',
     layout,
@@ -534,6 +546,7 @@ const agregarCabeceraExcel = (workbook, worksheet, titulo, subtitulo, ultimaColu
 };
 
 const generarXlsxMantenimiento = async (mantenimiento) => {
+  const ExcelJS = obtenerExcelJS();
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Auto Servicio San Jorge';
   workbook.created = new Date();
@@ -710,6 +723,7 @@ const generarXlsxMantenimiento = async (mantenimiento) => {
 };
 
 const generarXlsxListado = async (mantenimientos, { estado } = {}) => {
+  const ExcelJS = obtenerExcelJS();
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Auto Servicio San Jorge';
   workbook.created = new Date();
